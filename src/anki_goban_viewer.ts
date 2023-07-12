@@ -33,7 +33,8 @@ class Goban {
 	private sgf: string;
 	private containerElement: HTMLElement
 	private gobanDiv: HTMLElement;
-	initialSkip = 0;
+	private initialSkip = 0;
+	private speedCoef = 1;
 
 	positions: SGFGoban[] = [];
 
@@ -126,6 +127,11 @@ class Goban {
 			const start = this.getPropertyOrCommandDirective("START", node);
 			if (start !== undefined) {
 				this.initialSkip = n - 1;
+			}
+
+			const speed = this.getPropertyOrCommandDirective("SPEED", node) || "";
+			if (speed) {
+				this.speedCoef = parseInt(speed.trim()) || 1;
 			}
 
 			if (!node.children?.length) {
@@ -419,7 +425,7 @@ class Goban {
 	position = 0;
 
 	public animate(initDelay?: number, interval?: number) {
-		this.animateFromTo(initDelay, interval, this.initialSkip);
+		this.animateFromTo(initDelay, interval / this.speedCoef, this.initialSkip);
 	}
 
 	public animateFromTo(initDelay?: number, interval?: number, from: number = 0, to?: number) {
