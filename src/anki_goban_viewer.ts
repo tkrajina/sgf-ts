@@ -88,11 +88,6 @@ class Goban {
 	}
 
 	private parseGolangPositions(content: string) {
-		content = content.
-			replace(/<div.*?>/g, "\n").
-			replace(/<br.*?>/g, "\n").
-			replace(/<p.*?>/g, "\n").
-			replace(/<.*?>/g, "");
 		const rootNode = parseSGF(content);
 		this.sgf = content;
 		let goban = new SGFGoban(rootNode);
@@ -190,7 +185,7 @@ class Goban {
 
 	drawGoban() {
 		this.containerElement = document.getElementById("goban")
-		this.positions = this.parseGolangPositions(this.containerElement.innerHTML.trim());
+		this.positions = this.parseGolangPositions(this.containerElement.innerText.trim());
 
 		const sidePx = Math.min(
 			this.originalSidePx / (1 - this.cropLeft - this.cropRight),
