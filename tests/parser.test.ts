@@ -1,7 +1,7 @@
 import { getCombinedNodeFlags } from "typescript";
 import { SGFGoban } from "../src/goban";
 import { parseSGF, parseSGFCollection, SGFParser } from "../src/parser";
-import { coordinateToRowColumn, rowColumnToCoordinate, Tag } from "../src/sgf";
+import { coordinateToRowColumn, expandCoordinatesRange, rowColumnToCoordinate, Tag } from "../src/sgf";
 
 describe('testing index file', () => {
 	test('example', () => {
@@ -175,6 +175,12 @@ describe('testing index file', () => {
 		expect(sgfs[0].getProperty(Tag.GameName)).toBe("aaa");
 		expect(sgfs[1].getProperty(Tag.GameName)).toBe("ccc");
 		expect(sgfs[2].getProperty(Tag.GameName)).toBe("eee");
+	});
+	test('expand range', () => {
+		expect(expandCoordinatesRange("dd:de")).toEqual(["dd", "de"]);
+		expect(expandCoordinatesRange("dd:df")).toEqual(["dd", "de", "df"]);
+		expect(expandCoordinatesRange("dd:ee")).toEqual(["dd", "ed", "de", "ee"]);
+		expect(expandCoordinatesRange(["dd:ee", "aa"])).toEqual(["dd", "ed", "de", "ee", "aa"]);
 	});
 	// test('goban add white and black', () => {
 	// 	const goban = new Goban();

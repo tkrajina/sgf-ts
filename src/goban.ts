@@ -1,4 +1,4 @@
-import { coordinateToRowColumn, rowColumnToCoordinate, SGFColor, SGFCoordinate, SGFNode, SGFRowColumn, Tag } from "./sgf";
+import { coordinateToRowColumn, expandCoordinatesRange, rowColumnToCoordinate, SGFColor, SGFCoordinate, SGFNode, SGFRowColumn, Tag } from "./sgf";
 
 export class SGFGoban {
 
@@ -140,13 +140,15 @@ export class SGFGoban {
 		this.addStones(SGFColor.BLACK, ...(ab as SGFCoordinate[]));
 
 		this.comment = node.getProperty(Tag.Comment);
-		for (const tr of node.getProperties(Tag.Triangle)) { this.triangles[tr] = true; }
-		for (const tr of node.getProperties(Tag.Square)) { this.squares[tr] = true; }
-		for (const tr of node.getProperties(Tag.X)) { this.crosses[tr] = true; }
-		for (const tr of node.getProperties(Tag.Circle)) { this.circles[tr] = true; }
+		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Triangle))) { this.triangles[tr] = true; }
+		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Square))) { this.squares[tr] = true; }
+		for (const tr of expandCoordinatesRange(node.getProperties(Tag.X))) { this.crosses[tr] = true; }
+		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Circle))) { this.circles[tr] = true; }
 		for (const lb of node.getProperties(Tag.Label)) {
 			const parts = lb.split(":");
-			this.labels[parts[0]] = parts[1];
+			for (let coord of expandCoordinatesRange(parts[0])) {
+				this.labels[coord] = parts[1];
+			}
 		}
 
 		const b = node.getProperty(Tag.Black);

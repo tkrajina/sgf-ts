@@ -41,6 +41,36 @@ export enum Tag { // TODO: Rename
 
 }
 
+export function expandCoordinatesRange(_coords: string | SGFCoordinate | string[]) {
+	const res: SGFCoordinate[] = [];
+
+	if (!(_coords as string[])?.push) {
+		_coords = [_coords as string];
+	}
+	for (let coord of _coords) {
+		const parts = (coord as string).split(":");
+		if (parts.length != 2) {
+			res.push(coord);
+			return res;
+		}
+		console.log(parts[0], parts[1])
+		let [x1, y1] = coordinateToRowColumn(parts[0]);
+		let [x2, y2] = coordinateToRowColumn(parts[1]);
+		console.log(x1, y1, x2, y2)
+		const minX = Math.min(x1, x2);
+		const maxX = Math.max(x1, x2);
+		const minY = Math.min(y1, y2);
+		const maxY = Math.max(y1, y2);
+		for (let x = minX; x <= maxX; x++) {
+			for (let y = minY; y <= maxY; y++) {
+				res.push(rowColumnToCoordinate([x, y]));
+			}
+		}
+	}
+	return res;
+}
+
+
 export enum SGFColor {
 	BLACK = "B",
 	WHITE = "W",
