@@ -106,7 +106,6 @@ class Goban {
 					positions[0].nextToPlay = SGFColor.BLACK;
 				}
 			}
-			this.autocrop(goban);
 			const crop = this.getPropertyOrCommandDirective("CROP", node) || "";
 			if (crop?.trim() && crop.trim() != "auto") {
 				const parts = crop.trim().split(/[\s,]+/) || ["0","0","0","0"];
@@ -137,6 +136,10 @@ class Goban {
 			if (!node.children?.length) {
 				break;
 			}
+		}
+
+		if (!this.cropTop && !this.cropBottom && !this.cropLeft && !this.cropRight) {
+			this.autocrop(goban);
 		}
 
 		let ankiFrom = parseInt(this.getPropertyOrCommandDirective("ANKI", node));
