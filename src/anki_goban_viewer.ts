@@ -48,6 +48,7 @@ class Goban {
 	cropLeft = 0;
 
 	constructor(private originalSidePx: number) {
+		this.stopAnimation();
 		this.drawGoban();
 		if (this.positions?.length) {
 			this.drawBoard(0);
@@ -423,7 +424,6 @@ class Goban {
 		}
 	}
 
-	animationTimeout: any;
 	animationInterval: any;
 	position = 0;
 
@@ -436,12 +436,12 @@ class Goban {
 		let n = from;
 		to = to || 10000000;
 		this.drawBoard(n);
-		this.animationTimeout = setTimeout(() => {
+		globalThis.animationTimeout = setTimeout(() => {
 			this.drawBoard(++n);
 			if (n >= this.positions.length - 1) {
 				return;
 			}
-			this.animationInterval = setInterval(() => {
+			globalThis.animationInterval = setInterval(() => {
 				if (n >= to) {
 					return;
 				}
@@ -451,8 +451,8 @@ class Goban {
 	}
 
 	public stopAnimation() {
-		clearTimeout(this.animationTimeout);
-		clearInterval(this.animationInterval);
+		clearTimeout(globalThis?.animationTimeout);
+		clearInterval(globalThis?.animationInterval);
 	}
 
 	public next() {
