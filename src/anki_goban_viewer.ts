@@ -67,6 +67,7 @@ class Goban {
 			for (const comment of comments) {
 				console.log("comment:" + comment);
 				for (let line of comment.split("\n")) {
+					line = line.trim();
 					console.log("line:" + line)
 					if (line?.[0] === "!") {
 						line = line.substring(1);
