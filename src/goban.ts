@@ -107,6 +107,10 @@ export class SGFGoban {
 			this.nextToPlay = SGFColor.WHITE;
 		}
 
+		if (!coords) {
+			return; // pass
+		}
+
 		let removed: SGFCoordinate[] = [];
 		let [row, column] = coordinateToRowColumn(coords);
 		if (this.coordinateValid(row, column)) {
