@@ -90,10 +90,27 @@ class Goban {
 		return node.getProperty(name);
 	}
 
+	private cropFactor(cropFactor: number) {
+		if (!cropFactor) {
+			return cropFactor;
+		}
+		if (cropFactor >= 1) {
+			const res = cropFactor / this.boardSize;
+			console.log(`${cropFactor} -> ${res}`);
+			return res;
+		}
+		debugger
+		const res = Math.round(this.boardSize * cropFactor) / this.boardSize;
+		console.log(`${cropFactor} -> ${res}`);
+		return res;
+	}
+
 	private parseGolangPositions(content: string) {
 		const rootNode = parseSGF(content);
+
 		this.sgf = content;
 		let goban = new SGFGoban(rootNode);
+		this.boardSize = goban.size;
 
 		const positions: SGFGoban[] = [];
 		let n = 0;
@@ -111,10 +128,10 @@ class Goban {
 			const crop = this.getPropertyOrCommandDirective("CROP", node) || "";
 			if (crop?.trim() && crop.trim() != "auto") {
 				const parts = crop.trim().split(/[\s,]+/) || ["0","0","0","0"];
-				this.cropTop = parseFloat(parts[0]) || 0;
-				this.cropRight = parseFloat(parts[1]) || 0;
-				this.cropBottom = parseFloat(parts[2]) || 0;
-				this.cropLeft = parseFloat(parts[3]) || 0;
+				this.cropTop = this.cropFactor(parseFloat(parts[0]) || 0);
+				this.cropRight = this.cropFactor(parseFloat(parts[1]) || 0);
+				this.cropBottom = this.cropFactor(parseFloat(parts[2]) || 0);
+				this.cropLeft = this.cropFactor(parseFloat(parts[3]) || 0);
 			}
 			goban.apply(node);
 			positions.push(goban);
@@ -151,6 +168,7 @@ class Goban {
 			}
 			this.initialSkip = n + ankiFrom - 1;
 		}
+		// alert(this.initialSkip);
 
 		// for (const p of positions) {
 		// 	console.log("pos:\n"+p.debugStr());
@@ -185,12 +203,12 @@ class Goban {
 			}
 		}
 		if (colMax - colMin < goban.size / 2) {
-			this.cropLeft = Math.min(1, Math.max(0, (colMin / goban.size) - .15));
-			this.cropRight = Math.min(1, Math.max(0, 1 - (colMax / goban.size) - .15));
+			this.cropLeft = this.cropFactor(Math.min(1, Math.max(0, (colMin / goban.size) - .15)));
+			this.cropRight = this.cropFactor(Math.min(1, Math.max(0, 1 - (colMax / goban.size) - .15)));
 		}
 		if (rowMax - rowMin < goban.size / 2) {
-			this.cropTop = Math.min(1, Math.max(0, (rowMin / goban.size) - .15));
-			this.cropBottom = Math.min(1, Math.max(0, 1 - (rowMax / goban.size) - .15));
+			this.cropTop = this.cropFactor(Math.min(1, Math.max(0, (rowMin / goban.size) - .15)));
+			this.cropBottom = this.cropFactor(Math.min(1, Math.max(0, 1 - (rowMax / goban.size) - .15)));
 		}
 	}
 
@@ -203,7 +221,6 @@ class Goban {
 			this.originalSidePx / (1 - this.cropTop - this.cropBottom)
 		);
 
-		this.boardSize = this.positions[0].size;
 		console.log(`board size: ${this.boardSize}`);
 		this.bandWitdh = sidePx / this.boardSize;
 		this.stoneSide = this.bandWitdh * 0.95;
