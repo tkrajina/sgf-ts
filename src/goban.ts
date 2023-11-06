@@ -78,7 +78,7 @@ export class SGFGoban {
 
 	addStones(color: SGFColor, ...coords: SGFCoordinate[]) {
 		for (const coord of coords) {
-			if (coord.indexOf(":") > 0) {
+			if (coord?.indexOf(":") > 0) {
 				// Point list => square of points
 				const parts = coord.split(":");
 				let [r1, c1] = coordinateToRowColumn(parts[0]);
@@ -148,7 +148,7 @@ export class SGFGoban {
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Square))) { this.squares[tr] = true; }
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.X))) { this.crosses[tr] = true; }
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Circle))) { this.circles[tr] = true; }
-		for (const lb of node.getProperties(Tag.Label)) {
+		for (const lb of node.getProperties(Tag.Label)||[]) {
 			const parts = lb.split(":");
 			for (let coord of expandCoordinatesRange(parts[0])) {
 				this.labels[coord] = parts[1];
@@ -157,9 +157,9 @@ export class SGFGoban {
 
 		const b = node.getProperty(Tag.Black);
 		const w = node.getProperty(Tag.White);
-		if (b) {
+		if (b !== undefined) {
 			return this.playStone(SGFColor.BLACK, b as SGFCoordinate)
-		} else if (w) {
+		} else if (w !== undefined) {
 			return this.playStone(SGFColor.WHITE, w as SGFCoordinate)
 		}
 	}

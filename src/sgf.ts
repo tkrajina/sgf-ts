@@ -42,6 +42,10 @@ export enum Tag { // TODO: Rename
 }
 
 export function expandCoordinatesRange(_coords: string | SGFCoordinate | string[]) {
+	if (!_coords) {
+		return [];
+	}
+
 	const res: SGFCoordinate[] = [];
 
 	if (!(_coords as string[])?.push) {
@@ -95,10 +99,14 @@ export class SGFNode {
 
 	constructor(public properties: SGFProperty[] = [], public children: SGFNode[] = []) {}
 
+	/** Returnd undefined if not defined. */
 	getProperties(prop: string) {
-		let props: string[] = [];
+		let props: string[]|undefined = undefined;
 		for (const i in this.properties) {
 			if (this.properties[i].name === prop) {
+				if (props === undefined) {
+					props = [];
+				}
 				props.push(...this.properties[i].values);
 			}
 		}
