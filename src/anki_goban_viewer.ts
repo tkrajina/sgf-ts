@@ -95,12 +95,11 @@ class Goban {
 			return cropFactor;
 		}
 		if (cropFactor >= 1) {
-			const res = cropFactor / this.boardSize;
+			const res = cropFactor / this.boardSize - 0.25 / this.boardSize;
 			console.log(`${cropFactor} -> ${res}`);
 			return res;
 		}
-		debugger
-		const res = Math.round(this.boardSize * cropFactor) / this.boardSize;
+		const res = Math.round(this.boardSize * cropFactor) / this.boardSize - .25 / this.boardSize;
 		console.log(`${cropFactor} -> ${res}`);
 		return res;
 	}
