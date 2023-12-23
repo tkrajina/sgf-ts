@@ -187,11 +187,13 @@ export class SGFParser {
 			}
 			values.push(value);
 			this.next()
+			this.skipWhitespaces();
 		}
 
 		if (values.length === 0) {
 			throw new Error(`property values not found: ${this.debugPositionStr()}`);
 		}
+		this.skipWhitespaces();
 
 		return new SGFProperty(tag, values);
 	}

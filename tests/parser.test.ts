@@ -23,6 +23,12 @@ describe('testing index file', () => {
 		const group = goban.getGroupInfo(rowColumnToCoordinate([row, column]));
 		console.log(`After the last move a group containing a stone at row ${row}, column ${column} is ${group.groupColor}, contains the following stones ${JSON.stringify(group.groupStones)}`)
 	});
+	test('ignore newline and space', () => {
+		const node = parseSGF(`(;AB	[cp] [dp]
+[ep])`);
+		console.log(node.toSGF())
+		expect(node.toSGF()).toBe(`(;AB[cp][dp][ep])`);
+	});
 	test('tags', () => {
 	  expect(new SGFParser("").readProperty()).toBe(null);
 	  expect(new SGFParser("ASD[]").readProperty().name).toBe("ASD");
