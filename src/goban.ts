@@ -148,6 +148,12 @@ export class SGFGoban {
 		this.addStones(SGFColor.WHITE, ...(aw as SGFCoordinate[]));
 		this.addStones(SGFColor.BLACK, ...(ab as SGFCoordinate[]));
 
+		this.triangles = {};
+		this.squares = {};
+		this.crosses = {};
+		this.circles = {};
+		this.labels = {};
+
 		this.comment = node.getProperty(Tag.Comment);
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Triangle))) { this.triangles[tr] = true; }
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Square))) { this.squares[tr] = true; }
@@ -162,10 +168,20 @@ export class SGFGoban {
 
 		const b = node.getProperty(Tag.Black);
 		const w = node.getProperty(Tag.White);
+		const player = node.getProperty(Tag.Player)
 		if (b !== undefined) {
 			return this.playStone(SGFColor.BLACK, b as SGFCoordinate)
 		} else if (w !== undefined) {
 			return this.playStone(SGFColor.WHITE, w as SGFCoordinate)
+		} else if (player) {
+			this.nextToPlay = player as SGFColor;
+		} else if (node.children?.length > 0) {
+			const child = node.children[0];
+			if (child.getProperty(Tag.Black)) {
+				this.nextToPlay = SGFColor.BLACK;
+			} else if (child.getProperty(Tag.White)) {
+				this.nextToPlay = SGFColor.WHITE;
+			}
 		}
 	}
 
