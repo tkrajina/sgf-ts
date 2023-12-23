@@ -62,6 +62,11 @@ export class SGFGoban {
 		return row >= 0 && row < this.size && column >= 0 && column < this.size;
 	}
 
+	isStoneAt(coord: SGFCoordinate | SGFRowColumn): boolean {
+		const stone = this.stoneAt(coord);
+		return stone == SGFColor.WHITE || stone == SGFColor.BLACK;
+	}
+
 	stoneAt(coord: SGFCoordinate | SGFRowColumn): SGFColor {
 		let row: number, column: number;
 		if ((coord as SGFRowColumn).push) {
