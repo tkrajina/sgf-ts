@@ -183,6 +183,18 @@ export class SGFNode {
 	prependNode(node: SGFNode) {
 		this.children.unshift(node);
 	}
+
+	playerAndCoordinates(): [SGFColor, string] {
+		const b = this.getProperty(Tag.Black);
+		if (b !== undefined)  {
+			return [SGFColor.BLACK, b];
+		}
+		const w = this.getProperty(Tag.White);
+		if (w !== undefined)  {
+			return [SGFColor.WHITE, w];
+		}
+		return [undefined, undefined];
+	}
 }
 
 export class SGFProperty {
