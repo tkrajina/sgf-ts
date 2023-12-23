@@ -99,6 +99,26 @@ export class SGFNode {
 
 	constructor(public properties: SGFProperty[] = [], public children: SGFNode[] = []) {}
 
+	findPath(subnode: SGFNode, path?: SGFNode[]): SGFNode[] {
+		if (!path) {
+			path = [];
+		}
+		path.push(this);
+		if (this == subnode) {
+			return path;
+		}
+		if (!this.children?.length) {
+			return null;
+		}
+		for (const child of this.children) {
+			const subPath = child.findPath(subnode, path.slice());
+			if (subPath) {
+				return subPath;
+			}
+		}
+		return null;
+	}
+
 	/** Returnd undefined if not defined. */
 	getProperties(prop: string) {
 		let props: string[]|undefined = undefined;
