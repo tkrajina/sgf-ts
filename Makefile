@@ -4,13 +4,11 @@ test:
 
 .PHONY: clean
 clean:
-	rm all.*
+	-rm all.*
 
 .PHONY: single-js
 single-js: clean
 	echo "A VERY STUPID WAY TO CREATE A BROWSER-FRIENDLY SINGLE JS FILE (BUT IT WORKS)"
-
-	rm -Rf all.ts all.js
 
 	echo "" > all.ts
 	cat src/sgf.ts | grep -v -E "import.*from" >> all.ts

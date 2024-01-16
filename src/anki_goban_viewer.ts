@@ -14,19 +14,19 @@ const TAG_LABELS = {
 	[Tag.Label]: "special case", // overwritten later
 };
 
-const IS_NIGHT_MODE = !!document.getElementsByClassName("nightMode")?.length;
-const IS_ANDROID = window.navigator.userAgent.toLowerCase().indexOf("android") > 0
+// const IS_NIGHT_MODE = !!document.getElementsByClassName("nightMode")?.length;
+// const IS_ANDROID = window.navigator.userAgent.toLowerCase().indexOf("android") > 0
 
 let bgColor = "#ebb063";
 let blackStoneColor = "black"
 let whiteStoneColor = "white"
 
-if (IS_NIGHT_MODE && IS_ANDROID) {
-	console.log("android in dark mode!")
-	bgColor = "#184c96"; // invert of original bgColor
-	blackStoneColor = "white";
-	whiteStoneColor = "black";
-}
+// if (IS_NIGHT_MODE && IS_ANDROID) {
+// 	console.log("android in dark mode!")
+// 	bgColor = "#184c96"; // invert of original bgColor
+// 	blackStoneColor = "white";
+// 	whiteStoneColor = "black";
+// }
 
 class Goban {
 
