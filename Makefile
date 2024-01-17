@@ -15,6 +15,7 @@ single-js: clean
 	cat src/parser.ts | grep -v -E "import.*from" >> all.ts
 	cat src/goban.ts | grep -v -E "import.*from" >> all.ts
 	cat src/anki_goban_viewer.ts | grep -v -E "import.*from" >> all.ts
+	cat src/goban_viewer.ts | grep -v -E "import.*from" >> all.ts
 
 	tsc all.ts
 

@@ -141,7 +141,15 @@ export class SGFGoban {
 		return removed;
 	}
 
-	apply(node: SGFNode): SGFCoordinate[] {
+	apply(...nodes: SGFNode[]): SGFCoordinate[] {
+		let res: SGFCoordinate[];
+		for (const node of nodes) {
+			res = this.applySingleNode(node);
+		}
+		return res;
+	}
+
+	private applySingleNode(node: SGFNode): SGFCoordinate[] {
 		const ab = node.getProperties(Tag.AddBlack) || [];
 		const aw = node.getProperties(Tag.AddWhite) || [];
 

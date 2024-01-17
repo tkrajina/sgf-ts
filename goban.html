@@ -10,24 +10,10 @@
     <body>
         <span id="goban">
 
-(;FF[4]GM[1]CA[UTF-8]AP[besogo:0.0.2-alpha]SZ[19]ST[2]
-SO[books_sgf/elementary-go-tesuji/03_amputate_the_cutting_stones/06_more_problems/5.sgf]
-AB[np][oq][or][pq][qj][qk][qm][qp][rl][rm][rn][rp][so][sp][sq]AW[pk][pl][pm][po][pp][pr][ql][qn][qq][qr][ro][rq][rs][sr]
-;W[sn]
-;B[sm]
-;W[qo])
+(;BR[17k]DT[2024-01-14]GN[Friendly Match]PB[]PW[]RE[W+104.5]SZ[19]WR[4k]AW[cc][cf][ch][cm][dc][ec][fc][fd][fe][ff][fg][fq][gd][gh][jd][jf][jq][kd][ld][lg][nc][nh][oc][oi][pc][qp][qq][rm][rn][ro]AB[ci][cn][db][dd][dj][dm][dp][eb][eh][fb][fh][gc][ge][gf][gg][hb][hd][ie][jc][je][kc][mq][nd][ng][od][oh][pd][ph][pj][pp][pq][qf][qk][qm][qn][qo]PL[W]AP[Sabaki:0.52.2]CA[UTF-8];W[cl];B[ck];W[dl];B[el];W[ek];B[em];W[bn];B[ej];W[fk];B[co];W[bo];B[dk];W[cq];B[dq];W[cp];B[eo];W[gi];B[fj];W[gk];B[gj];W[dn];B[do];W[fn];B[en];W[fp];B[fo];W[hk];B[ho];W[gn];B[go];W[hq];B[hm];W[gm];B[gl];W[hl];B[fl];W[hn];B[im];W[in];B[jm];W[jn];B[ij];W[hj];B[hi];W[ii];B[hh];W[ik];B[jj];W[jk];B[kk];W[kj];B[ji];W[kl];B[lk];W[km];B[li];W[ki];B[jh];W[md];B[kn];W[ko];B[ln];W[lo];B[mn];W[rc];B[ll];W[jl];B[ip];W[jp];B[iq];W[ir];B[gq];W[gr];B[gp];W[cr];B[dr];W[re];B[qd];W[qc];B[rd];W[sd];B[rf];W[lb];B[lc];W[mc];B[kb];W[cb];B[ca];W[ba];B[da];W[bc];B[mb];W[nb];B[la];W[sj];B[qe];W[mh];B[lh];W[mg];B[kg];W[nf];B[og];W[nj];B[oj];W[lr];B[cs];W[br];B[es];W[fr];B[se];W[sc];B[na];W[oa];B[ma];W[pb];B[of];W[qr];B[pr];W[nk];B[bk];W[al];B[ak];W[bl];B[mo];W[dg];B[dh];W[bh];B[bi];W[mr];B[nr];W[lq];B[lp];W[kp];B[mp];W[sh];B[rl];W[sl];B[rk];W[sk];B[ri];W[si];B[rh];W[sm];B[sg];W[ol];B[pl];W[kf];B[mf];W[lf];B[me];W[jg];B[kh];W[ig];B[ih];W[om];B[mi];W[ni];B[ke];W[le];B[on];W[ne];B[oe];W[ah];B[ai];W[id];B[if];W[ic];B[hc];W[ib];B[ia];W[ja];B[jb];W[ha];B[ga];W[ia];B[hg];W[qs];B[ps];W[lm];B[mm];W[il];B[ok];W[nm];B[ml];W[nl];B[mj];W[nn];B[no];W[pn];B[oo];W[pm];B[pi];W[po];B[eg];W[ef];B[de];W[df];B[ms];W[ns];B[os];W[ql];B[qm];W[ls];B[ns];W[rj];B[qj];W[ce];B[qn];W[qo];B[ql];W[mk];B[jr];W[kr];B[js];W[is];B[hp];W[hr];B[jo];W[io];B[bg];W[cg];B[ab];W[ac];B[bs];W[ar];B[am];W[bm];B[];W[])
 
         </span>
 
-        <span id="_goban">
-
-
-
-
-
-
-
-        </span>
         <span id="goban_turn">jkljkl</span>
         <a href="javascript:void(goban.animate(500, 500))">animate</a>
         <a href="javascript:void(goban.first())">first</a>
@@ -38,6 +24,6 @@ AB[np][oq][or][pq][qj][qk][qm][qp][rl][rm][rn][rp][so][sp][sq]AW[pk][pl][pm][po]
         <a id="sgf_editor" href="#">sgf</a>
         <a id="sgf_show" href="#">show sgf</a>
         <p id="goban_comment"></p>
-        <script>goban = new Goban(400)</script>
+        <script>goban = new GobanViewer("goban")</script>
     </body>
 </html>
