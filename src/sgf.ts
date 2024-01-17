@@ -119,6 +119,20 @@ export class SGFNode {
 		return null;
 	}
 
+	findFirstProperty(p: Tag | string) {
+		let props = this.getProperties(p);
+		if (props?.length > 0) {
+			return props.find(s => !!s) || "";
+		}
+		for (const sub of this.children) {
+			const prop = sub.findFirstProperty(p)
+			if (prop) {
+				return prop;
+			}
+		}
+		return undefined;
+	}
+
 	/** Returnd undefined if not defined. */
 	getProperties(prop: string) {
 		let props: string[]|undefined = undefined;

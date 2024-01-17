@@ -98,6 +98,9 @@ describe('testing index file', () => {
 	});
 	test('two branches with backward slash', () => {
 		const node = new SGFParser(';GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[13]DT[2022-12-03](;B[ij]C[a[b\\]c];W[kg];B[if];W[kd])(;PL[B]AB[ef])').readNode();
+		expect(node.findFirstProperty("GM")).toBe("1");
+		expect(node.findFirstProperty("KM")).toBe("6.5");
+		expect(node.findFirstProperty("PL")).toBe("B");
 		expect(node.properties.length).toBe(7);
 		expect(node.getProperty("CA")).toBe("UTF-8");
 		expect(node.getProperty("AP")).toBe("Sabaki:0.52.2");
