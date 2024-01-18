@@ -33,7 +33,7 @@ class GobanViewer {
 	currentNode: SGFNode;
 	goban: SGFGoban;
 
-	constructor(private elementId: string, node?: SGFNode) {
+	constructor(private elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
 		const rootElement = document.getElementById(this.elementId);
 		if (!rootElement) {
 			alert("no goban element found");
@@ -50,7 +50,7 @@ class GobanViewer {
 		}
 		this.rootNode = node;
 		this.currentNode = node;
-		this.positionViewer = new GobanPositionViewer(elementId, node);
+		this.positionViewer = new GobanPositionViewer(elementId, node, opts);
 		this.goban = new SGFGoban();
 	}
 
@@ -80,9 +80,19 @@ class GobanViewer {
 
 }
 
+interface GobanViewerOpts {
+	side?: number,
+	unit?: string,
+	cropTop: number,
+	cropRight: number,
+	cropBottom: number,
+	cropLeft: number
+}
+
 class GobanPositionViewer {
 	size = 19;
-	side = 50;
+	originalSide: number;
+	side = 50; // This can change when cropping and zooming
 	bandWidth: number;
 	unit = "vmin";
 	goban: SGFGoban;
@@ -90,8 +100,20 @@ class GobanPositionViewer {
 	rootElement: HTMLElement;
 	gobanDiv: HTMLElement;
 
-	constructor(private elementId: string, node: SGFNode) {
+	cropTop = .25;
+	cropRight = .25;
+	cropBottom = 0;
+	cropLeft = 0;
+
+	constructor(private elementId: string, node: SGFNode, opts?: GobanViewerOpts) {
+		this.side = opts?.side || 50;
+		this.originalSide = this.side;
+		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);
+		this.cropTop = this.cropFactor(opts.cropTop);
+		this.cropRight = this.cropFactor(opts.cropRight);
+		this.cropBottom = this.cropFactor(opts.cropBottom);
+		this.cropLeft = this.cropFactor(opts.cropLeft);
 		if (!this.rootElement) {
 			alert("no goban element found");
 			return;
@@ -103,16 +125,46 @@ class GobanPositionViewer {
 		this.draw(goban);
 	}
 
+	private cropFactor(cropFactor: number) {
+		if (!cropFactor) {
+			return 0;
+		}
+		if (cropFactor >= 1) {
+			const res = cropFactor / this.size - 0.25 / this.size;
+			console.log(`${cropFactor} -> ${res}`);
+			return res;
+		}
+		const res = Math.round(this.size * cropFactor) / this.size - .25 / this.size;
+		console.log(`${cropFactor} -> ${res}`);
+		return res;
+	}
+
 	private drawGoban() {
+
+		this.side = Math.min(
+			this.originalSide / (1 - this.cropLeft - this.cropRight),
+			this.originalSide / (1 - this.cropTop - this.cropBottom)
+		);
+
+		const containerWindowDiv = getOrCreateElement("div", "goban-container", {
+			position: "relative",
+			overflow: "hidden",
+			width: `${(1 - this.cropRight - this.cropLeft) * this.side}${this.unit}`,
+			height: `${(1 - this.cropBottom - this.cropTop) * this.side}${this.unit}`,
+			margin: "0 auto 0 auto"
+		});
+
 		this.gobanDiv = getOrCreateElement("div", "goban_div", {
 			width: `${this.side}${this.unit}`,
 			height: `${this.side}${this.unit}`,
 			backgroundColor: "#ebb063",
 			position: "relative",
-			margin: "0 auto 0 auto"
+			top: `${(- this.cropTop) * this.side}${this.unit}`,
+			left: `${(- this.cropLeft) * this.side}${this.unit}`,
 		})
 		this.rootElement.innerHTML = "";
-		this.rootElement.appendChild(this.gobanDiv);
+		containerWindowDiv.appendChild(this.gobanDiv);
+		this.rootElement.appendChild(containerWindowDiv);
 		// const emptyBorder = .5 * this.side / this.size;
 		const emptyBorder = 0;
 		const playableSide = this.side - emptyBorder;
