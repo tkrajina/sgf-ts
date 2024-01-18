@@ -1,6 +1,6 @@
 import { SGFGoban } from "./goban";
 import { parseSGF } from "./parser";
-import { SGFColor, SGFNode, Tag } from "./sgf";
+import { SGFColor, SGFNode, Tag, coordinateToRowColumn } from "./sgf";
 
 function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 	if (style) {
@@ -250,13 +250,13 @@ class GobanPositionViewer {
 				break;
 		}
 		for (const pos of hoshiPositions) {
-			this.drawIntersectionDot(pos[0], pos[1], {opacity: 1, radious: this.bandWidth / 5, color: "black"})
+			this.drawIntersectionDot("hoshi", pos[0], pos[1], {opacity: 1, radious: this.bandWidth / 5, color: "black"})
 		}
 	}
 
 
-	drawIntersectionDot(row: number, col: number, params: {opacity?: any, color: string, radious: number}) {
-		const div1 = getOrCreateElement("div", `hoshi-${row}-${col}`, {
+	drawIntersectionDot(idPrefix: string, row: number, col: number, params: {opacity?: any, color: string, radious: number}) {
+		const div1 = getOrCreateElement("div", `${idPrefix}-intersection-${row}-${col}`, {
 			justifyContent: "center",
 			alignContent: "center",
 			display: "flex",
@@ -323,6 +323,18 @@ class GobanPositionViewer {
 					applyStyle(stoneElement, {visibility: "hidden"});
 				}
 			}
+		}
+		if (this.goban.latestMove) {
+			let [row, col] = coordinateToRowColumn(this.goban.latestMove);
+			/*
+				<IntersectionDot radious={bandWidth / 3}
+					color={props.goban.stoneAt(props.goban.latestMove) == SGFColor.BLACK ? "white" : "black"}
+					bandWidth={bandWidth} unit={unit} />}
+			*/
+			this.drawIntersectionDot("lastpt", row, col, {
+				color: this.goban.stoneAt(this.goban.latestMove) == SGFColor.BLACK ? "white" : "black",
+				radious: this.bandWidth / 3,
+			})
 		}
 		for (const rowNo in this.goban.goban) {
 			for (const colNo in this.goban.goban[rowNo]) {
