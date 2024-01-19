@@ -1,6 +1,6 @@
 import { SGFGoban } from "./goban";
 import { parseSGF } from "./parser";
-import { SGFColor, SGFNode, Tag, coordinateToRowColumn } from "./sgf";
+import { SGFColor, SGFNode, Tag, coordinateToRowColumn, rowColumnToCoordinate } from "./sgf";
 
 type StoneElement = HTMLElement & { row: number, col: number };
 
@@ -57,8 +57,21 @@ class GobanViewer {
 		}
 		this.rootNode = node;
 		this.currentNode = node;
+		opts.onClick = this.onClick.bind(this);
 		this.positionViewer = new GobanPositionViewer(elementId, node, opts);
 		this.goban = new SGFGoban();
+	}
+
+	onClick(row: number, col: number, color: SGFColor) {
+		const coord = rowColumnToCoordinate([row, col]);
+		for (const i in this.currentNode?.children||[]) {
+			const child = this.currentNode.children[i];
+			let [_, childCoord] = child.playerAndCoordinates();
+			if (coord == childCoord) {
+				this.next();
+				return;
+			}
+		}
 	}
 
 	next() {
@@ -94,6 +107,7 @@ interface GobanViewerOpts {
 	cropRight: number,
 	cropBottom: number,
 	cropLeft: number
+	onClick?: (row: number, col: number, coloe: SGFColor) => void;
 }
 
 class GobanPositionViewer {
@@ -119,6 +133,7 @@ class GobanPositionViewer {
 	private mouseOverRow: number;
 	private mouseOverCol: number;
 
+	private onClick?: (row: number, col: number, SGFColor) => void;
 
 	constructor(private elementId: string, node: SGFNode, opts?: GobanViewerOpts) {
 		this.side = opts?.side || 50;
@@ -129,6 +144,7 @@ class GobanPositionViewer {
 		this.cropRight = this.cropFactor(opts.cropRight);
 		this.cropBottom = this.cropFactor(opts.cropBottom);
 		this.cropLeft = this.cropFactor(opts.cropLeft);
+		this.onClick = opts?.onClick;
 		if (!this.rootElement) {
 			alert("no goban element found");
 			return;
@@ -266,7 +282,9 @@ class GobanPositionViewer {
 		this.gobanDiv.appendChild(div);
 		this.gobanDiv.onmouseleave = this.onMouseLeaveGoban.bind(this);
 		this.gobanDiv.onmouseup = e => {
-				alert(`${this.mouseOverRow}, ${this.mouseOverCol}`)
+				if (this.mouseOverRow !== undefined && this.mouseOverCol !== undefined) {
+					this?.onClick?.(this.mouseOverRow, this.mouseOverCol, this.goban.nextToPlay);
+				}
 			};
 		return div;
 	}
