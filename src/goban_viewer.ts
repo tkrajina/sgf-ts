@@ -265,6 +265,9 @@ class GobanPositionViewer {
 		}).element)
 		this.gobanDiv.appendChild(div);
 		this.gobanDiv.onmouseleave = this.onMouseLeaveGoban.bind(this);
+		this.gobanDiv.onmouseup = e => {
+				alert(`${this.mouseOverRow}, ${this.mouseOverCol}`)
+			};
 		return div;
 	}
 
