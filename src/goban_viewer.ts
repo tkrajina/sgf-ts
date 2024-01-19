@@ -11,17 +11,22 @@ function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 }
 
 function getOrCreateElement(name: string, id: string, style?: Partial<CSSStyleDeclaration>) {
-	const el = document.getElementById(id) || document.createElement(name);
+	let el = document.getElementById(id);
+	let created = false;
+	if (!el) {
+		created = true;
+		el =document.createElement(name);
+	}
 	if (id) {
 		el.id = id;
 	}
 	applyStyle(el, style);
-	return el;
+	return {element: el, created: created};
 }
 
 function createElement(name: string, id: string, style?: Partial<CSSStyleDeclaration>) {
 	const el = getOrCreateElement(name, id);
-	applyStyle(el, style);
+	applyStyle(el.element, style);
 	return el;
 }
 
@@ -155,7 +160,7 @@ class GobanPositionViewer {
 			width: `${(1 - this.cropRight - this.cropLeft) * this.side}${this.unit}`,
 			height: `${(1 - this.cropBottom - this.cropTop) * this.side}${this.unit}`,
 			margin: "0 auto 0 auto"
-		});
+		}).element;
 
 		this.gobanDiv = getOrCreateElement("div", "goban_div", {
 			width: `${this.side}${this.unit}`,
@@ -164,7 +169,7 @@ class GobanPositionViewer {
 			position: "relative",
 			top: `${(- this.cropTop) * this.side}${this.unit}`,
 			left: `${(- this.cropLeft) * this.side}${this.unit}`,
-		})
+		}).element;
 		this.rootElement.innerHTML = "";
 		containerWindowDiv.appendChild(this.gobanDiv);
 		this.rootElement.appendChild(containerWindowDiv);
@@ -181,7 +186,7 @@ class GobanPositionViewer {
 				top: `${this.bandWidth / 2}${this.unit}`,
 				left: `${playableSide * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
-			}))
+			}).element)
 			this.gobanDiv.appendChild(getOrCreateElement("div", `horizontal-${index}`, {
 				position: "absolute",
 				width: `${playableSide - this.bandWidth}${this.unit}`,
@@ -190,7 +195,7 @@ class GobanPositionViewer {
 				left: `${this.bandWidth / 2}${this.unit}`,
 				top: `${playableSide * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
-			}))
+			}).element)
 				// <div style={{}} />
 		}
 		this.drawHoshi();
@@ -225,7 +230,6 @@ class GobanPositionViewer {
 		}
 	}
 
-
 	drawIntersectionDot(idPrefix: string, row: number, col: number, params: {opacity?: any, color: string, radious: number}) {
 		const div = getOrCreateElement("div", `${idPrefix}-intersection-${row}-${col}`, {
 			justifyContent: "center",
@@ -237,7 +241,7 @@ class GobanPositionViewer {
 			height: `${this.bandWidth}${this.unit}`,
 			top: `${row * this.bandWidth}${this.unit}`,
 			left: `${col * this.bandWidth}${this.unit}`
-		})
+		}).element
 		div.appendChild(getOrCreateElement("div", `innext-hoshi-${row}-${col}`, {
 			opacity: params.opacity ? params.opacity : 1,
 			backgroundColor: params.color ? params.color : "black",
@@ -247,7 +251,7 @@ class GobanPositionViewer {
 			justifyContent: "center",
 			width: `${params.radious}${this.unit}`,
 			height: `${params.radious}${this.unit}`
-		}))
+		}).element)
 		this.gobanDiv.appendChild(div);
 		return div;
 	}
@@ -260,46 +264,7 @@ class GobanPositionViewer {
 		for (let row = 0; row < this.size; row++) {
 			console.log(JSON.stringify(this.goban.goban[row]));
 			for (let col = 0; col < this.size; col++) {
-				const color = this.goban.goban?.[row]?.[col];
-				let cssColor = "";
-				switch (color) {
-					case SGFColor.BLACK:
-						cssColor = "black";
-						break;
-					case SGFColor.WHITE:
-						cssColor = "white";
-						break;
-					case SGFColor.NONE, SGFColor.INVALID:
-						cssColor = "";
-						break;
-				}
-				const id = `stone-${row}-${col}`;
-				let stoneElement = document.getElementById(id);
-				if (!stoneElement) {
-					stoneElement = createElement("div", id);
-					this.gobanDiv.appendChild(stoneElement);
-					applyStyle(stoneElement, {
-						display: "flex",
-						justifyContent: "center",
-						alignContent: "center",
-						// opacity: props?.opacity ? props.opacity : undefined,
-						position: "absolute",
-						width: `${this.bandWidth}${this.unit}`,
-						height: `${this.bandWidth}${this.unit}`,
-						top: `${row * this.bandWidth}${this.unit}`,
-						left: `${col * this.bandWidth}${this.unit}`,
-					})
-				}
-				if (cssColor) {
-					applyStyle(stoneElement, {
-						borderRadius: `${this.bandWidth / 1}${this.unit}`,
-						backgroundColor: cssColor,
-					})
-				} else {
-					applyStyle(stoneElement, {
-						backgroundColor: null,
-					});
-				}
+				this.drawStone(row, col);
 			}
 		}
 		if (this.goban.latestMove) {
@@ -331,7 +296,7 @@ class GobanPositionViewer {
 		for (const coord in this.goban.squares) {
 			let [row, col] = coordinateToRowColumn(coord);
 			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-			this.drawLabel(row, col, "△□○", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+			this.drawLabel(row, col, "□", { bandWidth: this.bandWidth, unit: this.unit, color: color });
 		}
 		for (const coord in this.goban.crosses) {
 			let [row, col] = coordinateToRowColumn(coord);
@@ -354,6 +319,75 @@ class GobanPositionViewer {
 		*/
 	}
 
+	private drawStone(row: number, col: number) {
+		const color = this.goban.goban?.[row]?.[col];
+		let cssColor = "";
+		switch (color) {
+			case SGFColor.BLACK:
+				cssColor = "black";
+				break;
+			case SGFColor.WHITE:
+				cssColor = "white";
+				break;
+			case SGFColor.NONE, SGFColor.INVALID:
+				cssColor = "";
+				break;
+		}
+		const id = `stone-${row}-${col}`;
+		let stoneElement = document.getElementById(id);
+		if (!stoneElement) {
+			stoneElement = createElement("div", id).element;
+			this.gobanDiv.appendChild(stoneElement);
+			applyStyle(stoneElement, {
+				display: "flex",
+				justifyContent: "center",
+				alignContent: "center",
+				// opacity: props?.opacity ? props.opacity : undefined,
+				position: "absolute",
+				width: `${this.bandWidth}${this.unit}`,
+				height: `${this.bandWidth}${this.unit}`,
+				top: `${row * this.bandWidth}${this.unit}`,
+				left: `${col * this.bandWidth}${this.unit}`,
+			})
+			stoneElement.onmouseover = () => this.onMouseOver(row, col);
+			stoneElement.onmouseleave = () => this.onMouseOut(row, col);
+		}
+		if (cssColor) {
+			applyStyle(stoneElement, {
+				borderRadius: `${this.bandWidth / 1}${this.unit}`,
+				backgroundColor: cssColor,
+			})
+		} else {
+			applyStyle(stoneElement, {
+				backgroundColor: null,
+			});
+		}
+
+	}
+
+	private onMouseOver(row: number, col: number) {
+		let nextColor: string;
+		if (this.goban.nextToPlay == SGFColor.WHITE) {
+			nextColor = "white";
+		} else if (this.goban.nextToPlay == SGFColor.BLACK) {
+			nextColor = "black";
+		}
+		console.log(`on ${row},${col}, next stone ${nextColor}`);
+		const element = getOrCreateElement("div", "next-stone", {
+			display: "flex",
+			justifyContent: "center",
+			alignContent: "center",
+			position: "absolute",
+			width: `${this.bandWidth}${this.unit}`,
+			height: `${this.bandWidth}${this.unit}`,
+			top: `${row * this.bandWidth}${this.unit}`,
+			left: `${col * this.bandWidth}${this.unit}`,
+		});
+	}
+	private onMouseOut(row: number, col: number) {
+		console.log(`out of ${row},${col}`);
+	}
+
 	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string}) {
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneId = `stone-${row}-${column}`;
@@ -370,7 +404,7 @@ class GobanPositionViewer {
 			flexGrow: "1",
 			justifyContent: "center",
 			fontSize: `${props.bandWidth * 0.9}${props.unit}`
-		})
+		}).element
 		div.innerHTML = label;
 		stoneDiv.appendChild(div);
 		this.temporaryElements.push(div);
