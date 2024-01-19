@@ -105,6 +105,9 @@ class GobanPositionViewer {
 	cropBottom = 0;
 	cropLeft = 0;
 
+	/** Elements to be deleted before every position change */
+	temporaryElements: HTMLElement[] = [];
+
 	constructor(private elementId: string, node: SGFNode, opts?: GobanViewerOpts) {
 		this.side = opts?.side || 50;
 		this.originalSide = this.side;
@@ -256,7 +259,7 @@ class GobanPositionViewer {
 
 
 	drawIntersectionDot(idPrefix: string, row: number, col: number, params: {opacity?: any, color: string, radious: number}) {
-		const div1 = getOrCreateElement("div", `${idPrefix}-intersection-${row}-${col}`, {
+		const div = getOrCreateElement("div", `${idPrefix}-intersection-${row}-${col}`, {
 			justifyContent: "center",
 			alignContent: "center",
 			display: "flex",
@@ -267,7 +270,7 @@ class GobanPositionViewer {
 			top: `${row * this.bandWidth}${this.unit}`,
 			left: `${col * this.bandWidth}${this.unit}`
 		})
-		div1.appendChild(getOrCreateElement("div", `innext-hoshi-${row}-${col}`, {
+		div.appendChild(getOrCreateElement("div", `innext-hoshi-${row}-${col}`, {
 			opacity: params.opacity ? params.opacity : 1,
 			backgroundColor: params.color ? params.color : "black",
 			borderRadius: `${params.radious}${this.unit}`,
@@ -277,10 +280,14 @@ class GobanPositionViewer {
 			width: `${params.radious}${this.unit}`,
 			height: `${params.radious}${this.unit}`
 		}))
-		this.gobanDiv.appendChild(div1);
+		this.gobanDiv.appendChild(div);
+		return div;
 	}
 
 	draw(goban: SGFGoban) {
+		for (const el of this.temporaryElements) {
+			el.remove();
+		}
 		this.goban = goban;
 		for (let row = 0; row < this.size; row++) {
 			console.log(JSON.stringify(this.goban.goban[row]));
@@ -331,10 +338,10 @@ class GobanPositionViewer {
 					color={props.goban.stoneAt(props.goban.latestMove) == SGFColor.BLACK ? "white" : "black"}
 					bandWidth={bandWidth} unit={unit} />}
 			*/
-			this.drawIntersectionDot("lastpt", row, col, {
+			this.temporaryElements.push(this.drawIntersectionDot("lastpt", row, col, {
 				color: this.goban.stoneAt(this.goban.latestMove) == SGFColor.BLACK ? "white" : "black",
 				radious: this.bandWidth / 3,
-			})
+			}))
 		}
 		for (const rowNo in this.goban.goban) {
 			for (const colNo in this.goban.goban[rowNo]) {
