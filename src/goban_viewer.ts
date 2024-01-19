@@ -264,7 +264,7 @@ class GobanPositionViewer {
 			height: `${params.radious}${this.unit}`
 		}).element)
 		this.gobanDiv.appendChild(div);
-		this.gobanDiv.onmouseleave = this.onMouseLeaveGoban;
+		this.gobanDiv.onmouseleave = this.onMouseLeaveGoban.bind(this);
 		return div;
 	}
 
@@ -402,6 +402,9 @@ class GobanPositionViewer {
 				top: `${row * this.bandWidth}${this.unit}`,
 				left: `${col * this.bandWidth}${this.unit}`,
 				visibility: "visible",
+				borderRadius: `${this.bandWidth / 1}${this.unit}`,
+				backgroundColor: nextColor,
+				opacity: "0.4",
 			});
 			if (el.created) {
 				this.gobanDiv.appendChild(el.element);
@@ -414,6 +417,9 @@ class GobanPositionViewer {
 		console.log(`out of goban`);
 		this.mouseOverCol = undefined;
 		this.mouseOverRow = undefined;
+		applyStyle(this.tmpHoverStone, {
+			visibility: "hidden",
+		})
 	}
 
 	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string}) {
