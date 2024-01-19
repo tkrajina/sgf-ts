@@ -194,38 +194,6 @@ class GobanPositionViewer {
 				// <div style={{}} />
 		}
 		this.drawHoshi();
-		/*
-	return <div style={{}}>
-		<div ref={playableRef} id="goban" style={{position: "absolute", top: `${emptyBorder / 2}${unit}`, left: `${emptyBorder / 2}${unit}`, width: `${playableSide}${unit}`, height: `${playableSide}${unit}`}} onMouseMove={logCoordinates} onClick={logCoordinates} onMouseLeave={clearTmpStone} onMouseUp={onClick}>
-			<Hoshi bandWidth={bandWidth} goban={props.goban} unit={props.unit} />
-			{(props.markLastMove && props.goban.latestMove) && 
-				<IntersectionDot radious={bandWidth / 3} row={coordinateToRowColumn(props.goban.latestMove)?.[0]} column={coordinateToRowColumn(props.goban.latestMove)?.[1]} color={props.goban.stoneAt(props.goban.latestMove) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} />}
-			{props.goban.labels && Object.keys(props.goban.labels)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label={props.goban.labels[coordinate]} />}
-			)}
-			{props.goban.triangles && Object.keys(props.goban.triangles)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="△" />}
-			)}
-			{props.goban.squares && Object.keys(props.goban.squares)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="□" />}
-			)}
-			{props.goban.crosses && Object.keys(props.goban.crosses)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="×" />}
-			)}
-			{props.goban.circles && Object.keys(props.goban.circles)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="○" />}
-			)}
-			{!!(tmpStone && nextColor) && <Stone row={tmpStone[0]} column={tmpStone[1]} color={nextColor} bandWidth={bandWidth} unit={unit} opacity={0.25} />}
-			{props.emptyIntersections && <EmptyIntersections bandWidth={bandWidth} margins={props.emptyIntersections} goban={props.goban} unit={props.unit} />}
-			{props.invalidIntersections?.map((coords) => <IntersectionDot row={coords[0]} column={coords[1]} bandWidth={bandWidth} unit={props.unit} radious={bandWidth / 3} opacity={0.25} color="red" />)}
-		</div>
-	</div>
-		*/
 	}
 
 	drawHoshi() {
@@ -310,24 +278,25 @@ class GobanPositionViewer {
 				if (!stoneElement) {
 					stoneElement = createElement("div", id);
 					this.gobanDiv.appendChild(stoneElement);
-				}
-				if (cssColor) {
 					applyStyle(stoneElement, {
 						display: "flex",
 						justifyContent: "center",
 						alignContent: "center",
 						// opacity: props?.opacity ? props.opacity : undefined,
 						position: "absolute",
-						borderRadius: `${this.bandWidth / 1}${this.unit}`,
-						backgroundColor: cssColor,
 						width: `${this.bandWidth}${this.unit}`,
 						height: `${this.bandWidth}${this.unit}`,
 						top: `${row * this.bandWidth}${this.unit}`,
 						left: `${col * this.bandWidth}${this.unit}`,
-						visibility: "visible",
+					})
+				}
+				if (cssColor) {
+					applyStyle(stoneElement, {
+						borderRadius: `${this.bandWidth / 1}${this.unit}`,
+						backgroundColor: cssColor,
 					})
 				} else {
-					applyStyle(stoneElement, {visibility: "hidden"});
+					applyStyle(stoneElement, {});
 				}
 			}
 		}
@@ -347,17 +316,63 @@ class GobanPositionViewer {
 			for (const colNo in this.goban.goban[rowNo]) {
 			}
 		}
+		for (const labelCoord in this.goban.labels) {
+			const label = this.goban.labels[labelCoord];
+			let [row, col] = coordinateToRowColumn(labelCoord);
+			const color = this.goban.stoneAt(labelCoord) == SGFColor.BLACK ? "white" : "black";
+			this.drawLabel(row, col, label, { bandWidth: this.bandWidth, unit: this.unit, color: color, label: label });
+		}
 		/*
-			{props.goban.goban.map((row, rowNo) => row.map((color, columnNo) => {
-				switch (color) {
-					case SGFColor.BLACK:
-						return <Stone row={rowNo} column={columnNo} bandWidth={bandWidth} unit={unit} color={"black"}/>
-					case SGFColor.WHITE:
-						return <Stone row={rowNo} column={columnNo} bandWidth={bandWidth} unit={unit} color={"white"}/>
-				}
-			}
-			))}
+	return <div style={{}}>
+		<div ref={playableRef} id="goban" style={{position: "absolute", top: `${emptyBorder / 2}${unit}`, left: `${emptyBorder / 2}${unit}`, width: `${playableSide}${unit}`, height: `${playableSide}${unit}`}} onMouseMove={logCoordinates} onClick={logCoordinates} onMouseLeave={clearTmpStone} onMouseUp={onClick}>
+			{props.goban.labels && Object.keys(props.goban.labels)?.map(coordinate => {
+				const rowCol = coordinateToRowColumn(coordinate)
+				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label={props.goban.labels[coordinate]} />}
+			)}
+			{props.goban.triangles && Object.keys(props.goban.triangles)?.map(coordinate => {
+				const rowCol = coordinateToRowColumn(coordinate)
+				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="△" />}
+			)}
+			{props.goban.squares && Object.keys(props.goban.squares)?.map(coordinate => {
+				const rowCol = coordinateToRowColumn(coordinate)
+				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="□" />}
+			)}
+			{props.goban.crosses && Object.keys(props.goban.crosses)?.map(coordinate => {
+				const rowCol = coordinateToRowColumn(coordinate)
+				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="×" />}
+			)}
+			{props.goban.circles && Object.keys(props.goban.circles)?.map(coordinate => {
+				const rowCol = coordinateToRowColumn(coordinate)
+				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="○" />}
+			)}
+			{!!(tmpStone && nextColor) && <Stone row={tmpStone[0]} column={tmpStone[1]} color={nextColor} bandWidth={bandWidth} unit={unit} opacity={0.25} />}
+			{props.emptyIntersections && <EmptyIntersections bandWidth={bandWidth} margins={props.emptyIntersections} goban={props.goban} unit={props.unit} />}
+			{props.invalidIntersections?.map((coords) => <IntersectionDot row={coords[0]} column={coords[1]} bandWidth={bandWidth} unit={props.unit} radious={bandWidth / 3} opacity={0.25} color="red" />)}
+		</div>
+	</div>
 		*/
+	}
+
+	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string, label: string}) {
+		console.log(`Label ${label} on ${row},${column}`);
+		const stoneId = `stone-${row}-${column}`;
+		const stoneDiv = document.getElementById(stoneId);
+		if (!stoneDiv) {
+			console.error("no stone div found for id " + stoneId)
+		}
+		const div = getOrCreateElement("div", `label-${row}-${column}`, {
+			color: props.color,
+			display: "flex",
+			alignSelf: "center",
+			justifySelf: "center",
+			textAlign: "center",
+			flexGrow: "1",
+			justifyContent: "center",
+			fontSize: `${props.bandWidth * 0.9}${props.unit}`
+		})
+		div.innerHTML = label;
+		stoneDiv.appendChild(div);
+		this.temporaryElements.push(div);
 	}
 }
 
