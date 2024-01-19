@@ -2,6 +2,8 @@ import { SGFGoban } from "./goban";
 import { parseSGF } from "./parser";
 import { SGFColor, SGFNode, Tag, coordinateToRowColumn } from "./sgf";
 
+type StoneElement = HTMLElement & { row: number, col: number };
+
 function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 	if (style) {
 		for (const key of Object.keys(style)) {
@@ -104,6 +106,7 @@ class GobanPositionViewer {
 
 	rootElement: HTMLElement;
 	gobanDiv: HTMLElement;
+	tmpHoverStone: HTMLElement;
 
 	cropTop = .25;
 	cropRight = .25;
@@ -112,6 +115,10 @@ class GobanPositionViewer {
 
 	/** Elements to be deleted before every position change */
 	temporaryElements: HTMLElement[] = [];
+
+	private mouseOverRow: number;
+	private mouseOverCol: number;
+
 
 	constructor(private elementId: string, node: SGFNode, opts?: GobanViewerOpts) {
 		this.side = opts?.side || 50;
@@ -170,6 +177,10 @@ class GobanPositionViewer {
 			top: `${(- this.cropTop) * this.side}${this.unit}`,
 			left: `${(- this.cropLeft) * this.side}${this.unit}`,
 		}).element;
+		// this.gobanDiv.onmouseleave = (e: MouseEvent) => {
+		// 	e.preventDefault();
+		// 	console.log("out of the goban");
+		// };
 		this.rootElement.innerHTML = "";
 		containerWindowDiv.appendChild(this.gobanDiv);
 		this.rootElement.appendChild(containerWindowDiv);
@@ -253,6 +264,7 @@ class GobanPositionViewer {
 			height: `${params.radious}${this.unit}`
 		}).element)
 		this.gobanDiv.appendChild(div);
+		this.gobanDiv.onmouseleave = this.onMouseLeaveGoban;
 		return div;
 	}
 
@@ -333,59 +345,75 @@ class GobanPositionViewer {
 				cssColor = "";
 				break;
 		}
-		const id = `stone-${row}-${col}`;
-		let stoneElement = document.getElementById(id);
-		if (!stoneElement) {
-			stoneElement = createElement("div", id).element;
-			this.gobanDiv.appendChild(stoneElement);
-			applyStyle(stoneElement, {
-				display: "flex",
-				justifyContent: "center",
-				alignContent: "center",
-				// opacity: props?.opacity ? props.opacity : undefined,
-				position: "absolute",
-				width: `${this.bandWidth}${this.unit}`,
-				height: `${this.bandWidth}${this.unit}`,
-				top: `${row * this.bandWidth}${this.unit}`,
-				left: `${col * this.bandWidth}${this.unit}`,
-			})
-			stoneElement.onmouseover = () => this.onMouseOver(row, col);
-			stoneElement.onmouseleave = () => this.onMouseOut(row, col);
+		let stoneElement = getOrCreateElement("div", `stone-${row}-${col}`, {
+			display: "flex",
+			justifyContent: "center",
+			alignContent: "center",
+			// opacity: props?.opacity ? props.opacity : undefined,
+			position: "absolute",
+			width: `${this.bandWidth}${this.unit}`,
+			height: `${this.bandWidth}${this.unit}`,
+			top: `${row * this.bandWidth}${this.unit}`,
+			left: `${col * this.bandWidth}${this.unit}`,
+		})
+		if (stoneElement.created) {
+			this.gobanDiv.appendChild(stoneElement.element);
+			(stoneElement.element as StoneElement).row = row;
+			(stoneElement.element as StoneElement).col = col;
+			stoneElement.element.onmouseenter = e => {
+				const se = e.currentTarget as StoneElement;
+				 if (se?.row !== undefined && se?.col !== undefined) {
+					this.onMouseEnter(row, col)
+				}
+			};
 		}
 		if (cssColor) {
-			applyStyle(stoneElement, {
+			applyStyle(stoneElement.element, {
 				borderRadius: `${this.bandWidth / 1}${this.unit}`,
 				backgroundColor: cssColor,
 			})
 		} else {
-			applyStyle(stoneElement, {
+			applyStyle(stoneElement.element, {
 				backgroundColor: null,
 			});
 		}
 
 	}
 
-	private onMouseOver(row: number, col: number) {
-		let nextColor: string;
-		if (this.goban.nextToPlay == SGFColor.WHITE) {
-			nextColor = "white";
-		} else if (this.goban.nextToPlay == SGFColor.BLACK) {
-			nextColor = "black";
+	private onMouseEnter(row: number, col: number) {
+		if (row != this.mouseOverRow || col != this.mouseOverCol) {
+			console.log(`on ${row},${col}`);
+			this.mouseOverRow = row;
+			this.mouseOverCol = col;
+
+			let nextColor: string;
+			if (this.goban.nextToPlay == SGFColor.WHITE) {
+				nextColor = "white";
+			} else if (this.goban.nextToPlay == SGFColor.BLACK) {
+				nextColor = "black";
+			}
+			const el = getOrCreateElement("div", "next-stone", {
+				display: "flex",
+				justifyContent: "center",
+				alignContent: "center",
+				position: "absolute",
+				width: `${this.bandWidth}${this.unit}`,
+				height: `${this.bandWidth}${this.unit}`,
+				top: `${row * this.bandWidth}${this.unit}`,
+				left: `${col * this.bandWidth}${this.unit}`,
+				visibility: "visible",
+			});
+			if (el.created) {
+				this.gobanDiv.appendChild(el.element);
+				this.tmpHoverStone = el.element;
+			}
 		}
-		console.log(`on ${row},${col}, next stone ${nextColor}`);
-		const element = getOrCreateElement("div", "next-stone", {
-			display: "flex",
-			justifyContent: "center",
-			alignContent: "center",
-			position: "absolute",
-			width: `${this.bandWidth}${this.unit}`,
-			height: `${this.bandWidth}${this.unit}`,
-			top: `${row * this.bandWidth}${this.unit}`,
-			left: `${col * this.bandWidth}${this.unit}`,
-		});
 	}
-	private onMouseOut(row: number, col: number) {
-		console.log(`out of ${row},${col}`);
+
+	private onMouseLeaveGoban() {
+		console.log(`out of goban`);
+		this.mouseOverCol = undefined;
+		this.mouseOverRow = undefined;
 	}
 
 	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string}) {
