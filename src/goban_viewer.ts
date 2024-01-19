@@ -296,7 +296,9 @@ class GobanPositionViewer {
 						backgroundColor: cssColor,
 					})
 				} else {
-					applyStyle(stoneElement, {});
+					applyStyle(stoneElement, {
+						backgroundColor: null,
+					});
 				}
 			}
 		}
@@ -316,35 +318,34 @@ class GobanPositionViewer {
 			for (const colNo in this.goban.goban[rowNo]) {
 			}
 		}
-		for (const labelCoord in this.goban.labels) {
-			const label = this.goban.labels[labelCoord];
-			let [row, col] = coordinateToRowColumn(labelCoord);
-			const color = this.goban.stoneAt(labelCoord) == SGFColor.BLACK ? "white" : "black";
-			this.drawLabel(row, col, label, { bandWidth: this.bandWidth, unit: this.unit, color: color, label: label });
+		for (const coord in this.goban.labels) {
+			let [row, col] = coordinateToRowColumn(coord);
+			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
+			this.drawLabel(row, col, this.goban.labels[coord], { bandWidth: this.bandWidth, unit: this.unit, color: color });
+		}
+		for (const coord in this.goban.triangles) {
+			let [row, col] = coordinateToRowColumn(coord);
+			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
+			this.drawLabel(row, col, "△", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+		}
+		for (const coord in this.goban.squares) {
+			let [row, col] = coordinateToRowColumn(coord);
+			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
+			this.drawLabel(row, col, "△□○", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+		}
+		for (const coord in this.goban.crosses) {
+			let [row, col] = coordinateToRowColumn(coord);
+			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
+			this.drawLabel(row, col, "×", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+		}
+		for (const coord in this.goban.circles) {
+			let [row, col] = coordinateToRowColumn(coord);
+			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
+			this.drawLabel(row, col, "○", { bandWidth: this.bandWidth, unit: this.unit, color: color });
 		}
 		/*
 	return <div style={{}}>
 		<div ref={playableRef} id="goban" style={{position: "absolute", top: `${emptyBorder / 2}${unit}`, left: `${emptyBorder / 2}${unit}`, width: `${playableSide}${unit}`, height: `${playableSide}${unit}`}} onMouseMove={logCoordinates} onClick={logCoordinates} onMouseLeave={clearTmpStone} onMouseUp={onClick}>
-			{props.goban.labels && Object.keys(props.goban.labels)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label={props.goban.labels[coordinate]} />}
-			)}
-			{props.goban.triangles && Object.keys(props.goban.triangles)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="△" />}
-			)}
-			{props.goban.squares && Object.keys(props.goban.squares)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="□" />}
-			)}
-			{props.goban.crosses && Object.keys(props.goban.crosses)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="×" />}
-			)}
-			{props.goban.circles && Object.keys(props.goban.circles)?.map(coordinate => {
-				const rowCol = coordinateToRowColumn(coordinate)
-				return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="○" />}
-			)}
 			{!!(tmpStone && nextColor) && <Stone row={tmpStone[0]} column={tmpStone[1]} color={nextColor} bandWidth={bandWidth} unit={unit} opacity={0.25} />}
 			{props.emptyIntersections && <EmptyIntersections bandWidth={bandWidth} margins={props.emptyIntersections} goban={props.goban} unit={props.unit} />}
 			{props.invalidIntersections?.map((coords) => <IntersectionDot row={coords[0]} column={coords[1]} bandWidth={bandWidth} unit={props.unit} radious={bandWidth / 3} opacity={0.25} color="red" />)}
@@ -353,7 +354,7 @@ class GobanPositionViewer {
 		*/
 	}
 
-	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string, label: string}) {
+	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string}) {
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneId = `stone-${row}-${column}`;
 		const stoneDiv = document.getElementById(stoneId);
