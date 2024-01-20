@@ -132,7 +132,7 @@ class Goban {
 				this.cropBottom = this.cropFactor(parseFloat(parts[2]) || 0);
 				this.cropLeft = this.cropFactor(parseFloat(parts[3]) || 0);
 			}
-			goban.apply(node);
+			goban.applyNodes(node);
 			positions.push(goban);
 			goban = goban.clone();
 

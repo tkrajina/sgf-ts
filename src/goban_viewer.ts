@@ -74,9 +74,13 @@ class GobanViewer {
 		}
 		const node = new SGFNode();
 		node.setMove(color, coord);
-		this.goban.apply(node); // TODO: Check for errors
-		this.currentNode.appendNode(node);
-		this.goTo(node);
+		try {
+			this.goban.applyNodes(node); // TODO: Check for errors
+			this.currentNode.appendNode(node);
+			this.goTo(node);
+		} catch (e) {
+			console.error(e);
+		}
 	}
 
 	next() {
@@ -94,7 +98,7 @@ class GobanViewer {
 		this.currentNode = node;
 		const path = this.rootNode.findPath(node);
 		this.goban = new SGFGoban();
-		this.goban.apply(...path);
+		this.goban.applyNodes(...path);
 		this.positionViewer.draw(this.goban);
 	}
 
@@ -106,7 +110,7 @@ class GobanViewer {
 		path.pop();
 		this.currentNode = path[path.length - 1];
 		this.goban = new SGFGoban();
-		this.goban.apply(...path);
+		this.goban.applyNodes(...path);
 		this.positionViewer.draw(this.goban);
 	}
 
@@ -164,7 +168,7 @@ class GobanPositionViewer {
 		this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
 		this.drawGoban();
 		const goban = new SGFGoban();
-		goban.apply(node);
+		goban.applyNodes(node);
 		this.draw(goban);
 	}
 

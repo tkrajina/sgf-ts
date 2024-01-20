@@ -35,7 +35,7 @@ describe('capturing stones', () => {
 		const goban = new SGFGoban(parseInt(node?.getProperty(Tag.Size) as string));
 		expect(goban.size).toBe(13);
 
-		goban.apply(node as SGFNode);
+		goban.applyNodes(node as SGFNode);
 		expect(goban.debugStr()).toBe(`
 .............
 .............
@@ -52,7 +52,7 @@ describe('capturing stones', () => {
 .............
 `.trim())
 
-		goban.apply((node as SGFNode).children[0]);
+		goban.applyNodes((node as SGFNode).children[0]);
 		expect(goban.debugStr()).toBe(`
 .............
 .............
@@ -76,7 +76,7 @@ describe('capturing stones', () => {
 		const goban = new SGFGoban(parseInt(node?.getProperty(Tag.Size) as string));
 		expect(goban.size).toBe(13);
 
-		goban.apply(node as SGFNode);
+		goban.applyNodes(node as SGFNode);
 		expect(goban.debugStr()).toBe(`
 .............
 .............
@@ -93,7 +93,7 @@ describe('capturing stones', () => {
 .............
 `.trim())
 
-		goban.apply((node as SGFNode).children[0]);
+		goban.applyNodes((node as SGFNode).children[0]);
 		expect(goban.debugStr()).toBe(`
 .............
 .............
@@ -113,7 +113,7 @@ describe('capturing stones', () => {
 	test('caputuring with 2 stones', () => {
 		const node = parseSGF('(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[9]DT[2022-12-08]AB[ee][ef][dd][dc][eb][fc][fd]AE[ed]AW[ec][fe][ff][eg][df][de]PL[W];W[ed])');
 		const board = new SGFGoban(node);
-		board.apply(node.children[0]);
+		board.applyNodes(node.children[0]);
 		expect(board.debugStr()).toBe(`
 .........
 ....B....

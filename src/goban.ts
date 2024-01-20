@@ -32,7 +32,7 @@ export class SGFGoban {
 			this.goban.push(r);
 		}
 		if (node) {
-			this.apply(node);
+			this.applyNodes(node);
 		}
 	}
 
@@ -69,7 +69,7 @@ export class SGFGoban {
 
 	stoneAt(coord: SGFCoordinate | SGFRowColumn): SGFColor {
 		let row: number, column: number;
-		if ((coord as SGFRowColumn).push) {
+		if ((coord as SGFRowColumn)?.push) {
 			[row, column] = coord as SGFRowColumn;
 		} else {
 			[row, column] = coordinateToRowColumn(coord as SGFCoordinate);
@@ -142,7 +142,7 @@ export class SGFGoban {
 		return removed;
 	}
 
-	apply(...nodes: SGFNode[]): SGFCoordinate[] {
+	applyNodes(...nodes: SGFNode[]): SGFCoordinate[] {
 		let res: SGFCoordinate[];
 		for (const node of nodes) {
 			res = this.applySingleNode(node);
@@ -151,6 +151,7 @@ export class SGFGoban {
 	}
 
 	private applySingleNode(node: SGFNode): SGFCoordinate[] {
+
 		const ab = node.getProperties(Tag.AddBlack) || [];
 		const aw = node.getProperties(Tag.AddWhite) || [];
 
@@ -175,13 +176,19 @@ export class SGFGoban {
 			}
 		}
 
-		const b = node.getProperty(Tag.Black);
-		const w = node.getProperty(Tag.White);
+		let [color, coords] = node.playerAndCoordinates();
+		if (coords) {
+			const existingStone = this.stoneAt(coords)
+			if (existingStone == SGFColor.BLACK || existingStone == SGFColor.WHITE) {
+				throw new Error("Already taken");
+			}
+		}
+
 		const player = node.getProperty(Tag.Player)
-		if (b !== undefined) {
-			return this.playStone(SGFColor.BLACK, b as SGFCoordinate)
-		} else if (w !== undefined) {
-			return this.playStone(SGFColor.WHITE, w as SGFCoordinate)
+		if (color == SGFColor.BLACK) {
+			return this.playStone(SGFColor.BLACK, coords)
+		} else if (color == SGFColor.WHITE) {
+			return this.playStone(SGFColor.WHITE, coords)
 		} else if (player) {
 			this.nextToPlay = player as SGFColor;
 		} else if (node.children?.length > 0) {
