@@ -138,6 +138,7 @@ export class SGFGoban {
 				}
 			}
 		}
+		// TODO: Check self-atari
 		return removed;
 	}
 

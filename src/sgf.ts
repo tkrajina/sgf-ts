@@ -166,6 +166,17 @@ export class SGFNode {
 		this.properties.push(new SGFProperty(prop, [val]));
 	}
 
+	setMove(color: SGFColor, coord: SGFCoordinate) {
+		switch (color) {
+			case SGFColor.WHITE:
+				this.setProperty(Tag.White, coord)
+				break;
+			case SGFColor.BLACK:
+				this.setProperty(Tag.Black, coord)
+				break;
+		}
+	}
+
 	toSGF() {
 		return "(" + this.toSGFNode() + ")";
 	}

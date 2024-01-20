@@ -68,19 +68,31 @@ class GobanViewer {
 			const child = this.currentNode.children[i];
 			let [_, childCoord] = child.playerAndCoordinates();
 			if (coord == childCoord) {
-				this.next();
+				this.goTo(child);
 				return;
 			}
 		}
+		const node = new SGFNode();
+		node.setMove(color, coord);
+		this.goban.apply(node); // TODO: Check for errors
+		this.currentNode.appendNode(node);
+		this.goTo(node);
 	}
 
 	next() {
-		const child = this.currentNode.children?.[0];
-		if (!child) {
+		const node = this.currentNode.children?.[0];
+		if (!node) {
 			return;
 		}
-		this.currentNode = child;
-		const path = this.rootNode.findPath(child);
+		this.goTo(node);
+	}
+
+	goTo(node?: SGFNode) {
+		if (!node) {
+			return;
+		}
+		this.currentNode = node;
+		const path = this.rootNode.findPath(node);
 		this.goban = new SGFGoban();
 		this.goban.apply(...path);
 		this.positionViewer.draw(this.goban);
