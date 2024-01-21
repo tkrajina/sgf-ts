@@ -193,12 +193,24 @@ class GobanPositionViewer {
 			this.originalSide / (1 - this.cropTop - this.cropBottom)
 		);
 
-		const containerWindowDiv = getOrCreateElement("div", "goban-container", {
+		const coordinatesSpace = 2;
+
+		const withCoordinatesDiv = getOrCreateElement("div", "goban-coordinates", {
+			position: "relative",
+			width: `${coordinatesSpace + (1 - this.cropRight - this.cropLeft) * this.side}${this.unit}`,
+			border: "1px solid orange",
+			margin: "0 auto 0 auto",
+			backgroundColor: "#ebb063",
+			padding: `${coordinatesSpace}${this.unit}`,
+		}).element;
+
+		// Used to crop the overflow:
+		const cropContainerDiv = getOrCreateElement("div", "goban-container", {
 			position: "relative",
 			overflow: "hidden",
 			width: `${(1 - this.cropRight - this.cropLeft) * this.side}${this.unit}`,
 			height: `${(1 - this.cropBottom - this.cropTop) * this.side}${this.unit}`,
-			margin: "0 auto 0 auto"
+			margin: `1px`,
 		}).element;
 
 		this.gobanDiv = getOrCreateElement("div", "goban_div", {
@@ -214,8 +226,9 @@ class GobanPositionViewer {
 		// 	console.log("out of the goban");
 		// };
 		this.rootElement.innerHTML = "";
-		containerWindowDiv.appendChild(this.gobanDiv);
-		this.rootElement.appendChild(containerWindowDiv);
+		cropContainerDiv.appendChild(this.gobanDiv);
+		withCoordinatesDiv.appendChild(cropContainerDiv);
+		this.rootElement.appendChild(withCoordinatesDiv);
 		// const emptyBorder = .5 * this.side / this.size;
 		const emptyBorder = 0;
 		const playableSide = this.side - emptyBorder;
