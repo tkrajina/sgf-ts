@@ -2,6 +2,8 @@ import { SGFGoban } from "./goban";
 import { parseSGF } from "./parser";
 import { SGFColor, SGFNode, Tag, coordinateToRowColumn, rowColumnToCoordinate } from "./sgf";
 
+const coordinatesLetters = "abcdefghjklmnopqrst";
+
 type StoneElement = HTMLElement & { row: number, col: number };
 
 function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
@@ -12,7 +14,7 @@ function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 	}
 }
 
-function getOrCreateElement(name: string, id: string, style?: Partial<CSSStyleDeclaration>) {
+function getOrCreateElement(name: string, id: string, style?: Partial<CSSStyleDeclaration>, innerHTML?: string) {
 	let el = document.getElementById(id);
 	let created = false;
 	if (!el) {
@@ -23,6 +25,9 @@ function getOrCreateElement(name: string, id: string, style?: Partial<CSSStyleDe
 		el.id = id;
 	}
 	applyStyle(el, style);
+	if (innerHTML) {
+		el.innerHTML = innerHTML;
+	}
 	return {element: el, created: created};
 }
 
@@ -192,11 +197,13 @@ class GobanPositionViewer {
 			this.originalSide / (1 - this.cropLeft - this.cropRight),
 			this.originalSide / (1 - this.cropTop - this.cropBottom)
 		);
+		this.bandWidth = this.side / this.size;
 
 		const coordinatesSpace = 2;
 
 		const withCoordinatesDiv = getOrCreateElement("div", "goban-coordinates", {
 			position: "relative",
+			overflow: "hidden",
 			width: `${coordinatesSpace + (1 - this.cropRight - this.cropLeft) * this.side}${this.unit}`,
 			border: "1px solid orange",
 			margin: "0 auto 0 auto",
@@ -231,30 +238,73 @@ class GobanPositionViewer {
 		this.rootElement.appendChild(withCoordinatesDiv);
 		// const emptyBorder = .5 * this.side / this.size;
 		const emptyBorder = 0;
-		const playableSide = this.side - emptyBorder;
-		this.bandWidth = playableSide / this.size;
 		for (let index = 0; index < this.size; index++) {
 			this.gobanDiv.appendChild(getOrCreateElement("div", `vertical-${index}`, {
 				position: "absolute",
-				height: `${playableSide - this.bandWidth}${this.unit}`,
+				height: `${this.side - this.bandWidth}${this.unit}`,
 				width: "0.5px",
 				color: "black",
 				top: `${this.bandWidth / 2}${this.unit}`,
-				left: `${playableSide * index / this.size + this.bandWidth / 2.}${this.unit}`,
+				left: `${this.side * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
 			}).element)
 			this.gobanDiv.appendChild(getOrCreateElement("div", `horizontal-${index}`, {
 				position: "absolute",
-				width: `${playableSide - this.bandWidth}${this.unit}`,
+				width: `${this.side - this.bandWidth}${this.unit}`,
 				height: "0.5px",
 				color: "black",
 				left: `${this.bandWidth / 2}${this.unit}`,
-				top: `${playableSide * index / this.size + this.bandWidth / 2.}${this.unit}`,
+				top: `${this.side * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
 			}).element)
 				// <div style={{}} />
 		}
 		this.drawHoshi();
+		this.drawCoordinates(withCoordinatesDiv);
+	}
+
+	drawCoordinates(withCoordinatesDiv: HTMLElement) {
+		for (let i = 0; i < this.size; i++) {
+			const top = (i + 0.5) * this.bandWidth - this.cropTop * this.side;
+			let baseStyle: Partial<CSSStyleDeclaration> = {
+				position: "absolute",
+				display: "flex",
+				alignItems: "center",
+				justifyItems: "center",
+				textAlign: "center",
+				alignContent: "center",
+				justifyContent: "center",
+				flexGrow: "1",
+				width: `${this.bandWidth}${this.unit}`,
+				height: `${this.bandWidth}${this.unit}`,
+				fontSize: `${this.bandWidth / 3}${this.unit}`,
+			}
+			if (top > 0) {
+				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-left`, {
+					...baseStyle,
+					top: `${top}${this.unit}`,
+					left: "0px",
+				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
+				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-right`, {
+					...baseStyle,
+					top: `${top}${this.unit}`,
+					right: "0px",
+				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
+			}
+			const left = (i + 0.5) * this.bandWidth - this.cropLeft * this.side;
+			if (left > 0) {
+				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-top`, {
+					...baseStyle,
+					top: "0px",
+					left: `${left}${this.unit}`,
+				}, `${i + 1}`).element);
+				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-bottom`, {
+					...baseStyle,
+					bottom: "0px",
+					left: `${left}${this.unit}`,
+				}, `${i + 1}`).element);
+			}
+		}
 	}
 
 	drawHoshi() {
