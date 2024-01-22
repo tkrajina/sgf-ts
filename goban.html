@@ -8,22 +8,31 @@
         <script src="all.js"></script>
     </head>
     <body>
-        <span id="goban">
-
+        <span id="goban1">
 (;GM[1]FF[4]SZ[19]AP[Sabaki:0.52.2]AB[ro:rq][pp:qp][oq:os]AW[qn:qo][rn][po][np:op][pq:ps][qq][rr]PL[B]VW[ll:ss]FG[4353:Black to play]CA[UTF-8](;B[rs];W[sr];B[qr]C[CORRECT])(;B[qs];W[qr];B[sr];W[rs];B[sq];W[so]))
-
         </span>
 
-        <span id="goban_turn">jkljkl</span>
-        <a href="javascript:void(goban.animate(500, 500))">animate</a>
-        <a href="javascript:void(goban.first())">first</a>
-        <a href="javascript:void(goban.previous())">previous</a>
+<!--         <a href="javascript:void(goban1.animate(500, 500))">animate</a>
+        <a href="javascript:void(goban1.first())">first</a> -->
+        <a href="javascript:void(goban1.previous())">previous</a>
         <span id="goban_position"></span>
-        <a href="javascript:void(goban.next())">next</a>
-        <a href="javascript:void(goban.last())">last</a>
-        <a id="sgf_editor" href="#">sgf</a>
+        <a href="javascript:void(goban1.next())">next</a>
+        <a href="javascript:void(goban1.last())">last</a>
+<!--         <a id="sgf_editor" href="#">sgf</a>
         <a id="sgf_show" href="#">show sgf</a>
-        <p id="goban_comment"></p>
-        <script>goban = new GobanViewer("goban", null, {cropTop: 10, /* cropBottom: 2, */ cropLeft: 10, /* cropRight: 10, */ coordinates: true, mode: "PROBLEM"})</script>
+        <p id="goban_comment"></p> -->
+        <script>goban1 = new GobanViewer("goban1", null, {cropTop: 10, /* cropBottom: 2, */ cropLeft: 10, /* cropRight: 10, */ coordinates: true, mode: "PROBLEM"})</script>
+
+        <hr />
+
+        <span id="goban2">
+(;GM[1]FF[4]SZ[19]AP[Sabaki:0.52.2]AB[ro:rq][pp:qp][oq:os]AW[qn:qo][rn][po][np:op][pq:ps][qq][rr]PL[B]VW[ll:ss]FG[4353:Black to play]CA[UTF-8](;B[rs];W[sr];B[qr]C[CORRECT])(;B[qs];W[qr];B[sr];W[rs];B[sq];W[so]))
+        </span>
+
+        <a href="javascript:void(goban2.previous())">previous</a>
+        <span id="goban_position"></span>
+        <a href="javascript:void(goban2.next())">next</a>
+        <a href="javascript:void(goban2.last())">last</a>
+        <script>goban2 = new GobanViewer("goban2", null, {coordinates: false, mode: "PROBLEM"})</script>
     </body>
 </html>

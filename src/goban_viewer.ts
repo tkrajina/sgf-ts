@@ -34,7 +34,8 @@ function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 	}
 }
 
-function getOrCreateElement(name: string, id: string, style?: Partial<CSSStyleDeclaration>, innerHTML?: string) {
+function getOrCreateElement(prefix: string, name: string, id: string, style?: Partial<CSSStyleDeclaration>, innerHTML?: string) {
+	id = prefix + "__" + id;
 	let el = document.getElementById(id);
 	let created = false;
 	if (!el) {
@@ -51,8 +52,8 @@ function getOrCreateElement(name: string, id: string, style?: Partial<CSSStyleDe
 	return {element: el, created: created};
 }
 
-function createElement(name: string, id: string, style?: Partial<CSSStyleDeclaration>) {
-	const el = getOrCreateElement(name, id);
+function createElement(prefix: string, name: string, id: string, style?: Partial<CSSStyleDeclaration>) {
+	const el = getOrCreateElement(prefix, name, id);
 	applyStyle(el.element, style);
 	return el;
 }
@@ -166,6 +167,9 @@ interface GobanViewerOpts {
 }
 
 class GobanPositionViewer {
+
+	idPrefix = Math.random() + "_" + Date.now();
+
 	size = 19;
 
 	/** Side of the goban the user wants */
@@ -249,7 +253,7 @@ class GobanPositionViewer {
 		);
 		this.bandWidth = this.width / this.size;
 
-		const withCoordinatesDiv = getOrCreateElement("div", "goban-coordinates", {
+		const withCoordinatesDiv = getOrCreateElement(this.idPrefix, "div", "goban-coordinates", {
 			overflow: "hidden",
 			backgroundColor: "#ebb063",
 			position: "relative",
@@ -258,7 +262,7 @@ class GobanPositionViewer {
 		}).element;
 
 		// Used to crop the overflow:
-		const cropContainerDiv = getOrCreateElement("div", "goban-container", {
+		const cropContainerDiv = getOrCreateElement(this.idPrefix, "div", "goban-container", {
 			position: "absolute",
 			overflow: "hidden",
 			width: `${this.gobanWidth()}${this.unit}`,
@@ -268,7 +272,7 @@ class GobanPositionViewer {
 			margin: `1px`,
 		}).element;
 
-		this.gobanDiv = getOrCreateElement("div", "goban_div", {
+		this.gobanDiv = getOrCreateElement(this.idPrefix, "div", "goban_div", {
 			width: `${this.width}${this.unit}`,
 			height: `${this.width}${this.unit}`,
 			backgroundColor: "#ebb063",
@@ -286,7 +290,7 @@ class GobanPositionViewer {
 		this.rootElement.appendChild(withCoordinatesDiv);
 		// const emptyBorder = .5 * this.side / this.size;
 		for (let index = 0; index < this.size; index++) {
-			this.gobanDiv.appendChild(getOrCreateElement("div", `vertical-${index}`, {
+			this.gobanDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `vertical-${index}`, {
 				position: "absolute",
 				height: `${this.width - this.bandWidth}${this.unit}`,
 				width: "0.5px",
@@ -295,7 +299,7 @@ class GobanPositionViewer {
 				left: `${this.width * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
 			}).element)
-			this.gobanDiv.appendChild(getOrCreateElement("div", `horizontal-${index}`, {
+			this.gobanDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `horizontal-${index}`, {
 				position: "absolute",
 				width: `${this.width - this.bandWidth}${this.unit}`,
 				height: "0.5px",
@@ -333,12 +337,12 @@ class GobanPositionViewer {
 			}
 			console.log(`label=${coordinatesLetters.charAt(i).toUpperCase() || `${i}`} top=${top}, height=${this.gobanHeight()} band=${this.bandWidth}`)
 			if (0 < top && top <= this.gobanHeight()) {
-				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-left`, {
+				withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `coordinate-${i}-left`, {
 					...baseStyle,
 					top: `${top}${this.unit}`,
 					left: "0px",
 				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
-				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-right`, {
+				withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `coordinate-${i}-right`, {
 					...baseStyle,
 					top: `${top}${this.unit}`,
 					right: "0px",
@@ -346,12 +350,12 @@ class GobanPositionViewer {
 			}
 			const left = (i + 1) * this.bandWidth - this.cropLeft * this.width;
 			if (0 < left && left <= this.gobanWidth()) {
-				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-top`, {
+				withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `coordinate-${i}-top`, {
 					...baseStyle,
 					top: "0px",
 					left: `${left}${this.unit}`,
 				}, `${i + 1}`).element);
-				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-bottom`, {
+				withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `coordinate-${i}-bottom`, {
 					...baseStyle,
 					bottom: "0px",
 					left: `${left}${this.unit}`,
@@ -390,7 +394,7 @@ class GobanPositionViewer {
 	}
 
 	drawIntersectionDot(idPrefix: string, row: number, col: number, params: {opacity?: any, color: string, radious: number}) {
-		const div = getOrCreateElement("div", `${idPrefix}-intersection-${row}-${col}`, {
+		const div = getOrCreateElement(this.idPrefix, "div", `${idPrefix}-intersection-${row}-${col}`, {
 			justifyContent: "center",
 			alignContent: "center",
 			display: "flex",
@@ -401,7 +405,7 @@ class GobanPositionViewer {
 			top: `${row * this.bandWidth}${this.unit}`,
 			left: `${col * this.bandWidth}${this.unit}`
 		}).element
-		div.appendChild(getOrCreateElement("div", `innext-hoshi-${row}-${col}`, {
+		div.appendChild(getOrCreateElement(this.idPrefix, "div", `innext-hoshi-${row}-${col}`, {
 			opacity: params.opacity ? params.opacity : 1,
 			backgroundColor: params.color ? params.color : "black",
 			borderRadius: `${params.radious}${this.unit}`,
@@ -498,7 +502,7 @@ class GobanPositionViewer {
 				cssColor = "";
 				break;
 		}
-		let stoneElement = getOrCreateElement("div", `stone-${row}-${col}`, {
+		let stoneElement = getOrCreateElement(this.idPrefix, "div", `stone-${row}-${col}`, {
 			display: "flex",
 			justifyContent: "center",
 			alignContent: "center",
@@ -545,7 +549,7 @@ class GobanPositionViewer {
 			} else if (this.goban.nextToPlay == SGFColor.BLACK) {
 				nextColor = "black";
 			}
-			const el = getOrCreateElement("div", "next-stone", {
+			const el = getOrCreateElement(this.idPrefix, "div", "next-stone", {
 				display: "flex",
 				justifyContent: "center",
 				alignContent: "center",
@@ -582,7 +586,7 @@ class GobanPositionViewer {
 		if (!stoneDiv) {
 			console.error("no stone div found for id " + stoneId)
 		}
-		const div = getOrCreateElement("div", `label-${row}-${column}`, {
+		const div = getOrCreateElement(this.idPrefix, "div", `label-${row}-${column}`, {
 			color: props.color,
 			display: "flex",
 			alignSelf: "center",
