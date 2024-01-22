@@ -71,6 +71,7 @@ class GobanViewer {
 	rootNode: SGFNode;
 	currentNode: SGFNode;
 	goban: SGFGoban;
+	autoPlayColor: SGFColor | undefined = undefined;
 
 	constructor(private elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
 		const rootElement = document.getElementById(this.elementId);
@@ -97,16 +98,41 @@ class GobanViewer {
 		this.goban = new SGFGoban();
 	}
 
+	autoPlayTimeout: any;
+
 	onClick(row: number, col: number, color: SGFColor) {
+		if (this.autoPlayTimeout) {
+			return;
+		}
 		const coord = rowColumnToCoordinate([row, col]);
 		for (const i in this.currentNode?.children||[]) {
 			const child = this.currentNode.children[i];
 			let [_, childCoord] = child.playerAndCoordinates();
 			if (coord == childCoord) {
 				if ((child as SGFNodeWithMetadata)?.pathToSolution) {
-					alert("yes!");
+					console.log("yes");
 				}
 				this.goTo(child);
+				this.autoPlayTimeout = setTimeout(() => {
+					this.autoPlayTimeout = null;
+					if (!child.children?.length) {
+						if ((child as SGFNodeWithMetadata)?.pathToSolution) {
+							alert("Correct");
+						} else {
+							alert("Incorrecr");
+						}
+						return;
+					}
+					const first = (child.children || []).find((sub => {
+						if ((sub as SGFNodeWithMetadata).pathToSolution) {
+							return true;
+						}
+					}))
+					if (first) {
+						this.goTo(first);
+					}
+					this.goTo(child.children[0]);
+				}, 2 * 250);
 				return;
 			}
 		}
@@ -122,6 +148,10 @@ class GobanViewer {
 	}
 
 	next() {
+		if (this.autoPlayTimeout) {
+			return;
+		}
+		// TODO: Autoclick colos
 		const node = this.currentNode.children?.[0];
 		if (!node) {
 			return;
@@ -141,6 +171,9 @@ class GobanViewer {
 	}
 
 	previous() {
+		if (this.autoPlayTimeout) {
+			return;
+		}
 		const path = this.rootNode.findPath(this.currentNode);
 		if ((path?.length || 0) < 2) {
 			return;
