@@ -129,12 +129,18 @@ interface GobanViewerOpts {
 	cropBottom: number,
 	cropLeft: number
 	onClick?: (row: number, col: number, coloe: SGFColor) => void;
+	coordinates?: boolean;
 }
 
 class GobanPositionViewer {
 	size = 19;
-	originalSide: number;
-	side = 50; // This can change when cropping and zooming
+
+	/** Side of the goban the user wants */
+	originalWidth: number;
+
+	/** Side of the goban including the cropped parts */
+	width = 50; // This can change when cropping and zooming
+
 	bandWidth: number;
 	unit = "vmin";
 	goban: SGFGoban;
@@ -151,14 +157,16 @@ class GobanPositionViewer {
 	/** Elements to be deleted before every position change */
 	temporaryElements: HTMLElement[] = [];
 
+	coordinates: boolean = false;
+
 	private mouseOverRow: number;
 	private mouseOverCol: number;
 
 	private onClick?: (row: number, col: number, SGFColor) => void;
 
 	constructor(private elementId: string, node: SGFNode, opts?: GobanViewerOpts) {
-		this.side = opts?.side || 50;
-		this.originalSide = this.side;
+		this.width = opts?.side || 50;
+		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);
 		this.cropTop = this.cropFactor(opts.cropTop);
@@ -166,6 +174,7 @@ class GobanPositionViewer {
 		this.cropBottom = this.cropFactor(opts.cropBottom);
 		this.cropLeft = this.cropFactor(opts.cropLeft);
 		this.onClick = opts?.onClick;
+		this.coordinates = opts?.coordinates;
 		if (!this.rootElement) {
 			alert("no goban element found");
 			return;
@@ -182,51 +191,57 @@ class GobanPositionViewer {
 			return 0;
 		}
 		if (cropFactor >= 1) {
-			const res = cropFactor / this.size - 0.25 / this.size;
+			const res = cropFactor / this.size; // - 0.25 / this.size;
 			console.log(`${cropFactor} -> ${res}`);
 			return res;
 		}
-		const res = Math.round(this.size * cropFactor) / this.size - .25 / this.size;
+		const res = Math.round(this.size * cropFactor) / this.size; // - .25 / this.size;
 		console.log(`${cropFactor} -> ${res}`);
 		return res;
 	}
 
+	private gobanWidth() {
+		return (1 - this.cropRight - this.cropLeft) * this.width;
+	}
+
+	private gobanHeight() {
+		return (1 - this.cropTop - this.cropBottom) * this.width;
+	}
+
 	private drawGoban() {
 
-		this.side = Math.min(
-			this.originalSide / (1 - this.cropLeft - this.cropRight),
-			this.originalSide / (1 - this.cropTop - this.cropBottom)
+		this.width = Math.min(
+			this.originalWidth / (1 - this.cropLeft - this.cropRight),
+			this.originalWidth / (1 - this.cropTop - this.cropBottom)
 		);
-		this.bandWidth = this.side / this.size;
-
-		const coordinatesSpace = 2;
+		this.bandWidth = this.width / this.size;
 
 		const withCoordinatesDiv = getOrCreateElement("div", "goban-coordinates", {
-			position: "relative",
 			overflow: "hidden",
-			width: `${coordinatesSpace + (1 - this.cropRight - this.cropLeft) * this.side}${this.unit}`,
-			border: "1px solid orange",
-			margin: "0 auto 0 auto",
 			backgroundColor: "#ebb063",
-			padding: `${coordinatesSpace}${this.unit}`,
+			position: "relative",
+			width: `${(this.coordinates ? 2 * this.bandWidth : 0) + this.gobanWidth()}${this.unit}`,
+			height: `${(this.coordinates ? 2 * this.bandWidth : 0) + this.gobanHeight()}${this.unit}`,
 		}).element;
 
 		// Used to crop the overflow:
 		const cropContainerDiv = getOrCreateElement("div", "goban-container", {
-			position: "relative",
+			position: "absolute",
 			overflow: "hidden",
-			width: `${(1 - this.cropRight - this.cropLeft) * this.side}${this.unit}`,
-			height: `${(1 - this.cropBottom - this.cropTop) * this.side}${this.unit}`,
+			width: `${this.gobanWidth()}${this.unit}`,
+			height: `${this.gobanHeight()}${this.unit}`,
+			top: this.coordinates ? `${this.bandWidth}${this.unit}` : "0px",
+			left: this.coordinates ? `${this.bandWidth}${this.unit}` : "0px",
 			margin: `1px`,
 		}).element;
 
 		this.gobanDiv = getOrCreateElement("div", "goban_div", {
-			width: `${this.side}${this.unit}`,
-			height: `${this.side}${this.unit}`,
+			width: `${this.width}${this.unit}`,
+			height: `${this.width}${this.unit}`,
 			backgroundColor: "#ebb063",
 			position: "relative",
-			top: `${(- this.cropTop) * this.side}${this.unit}`,
-			left: `${(- this.cropLeft) * this.side}${this.unit}`,
+			top: `${(- this.cropTop) * this.width}${this.unit}`,
+			left: `${(- this.cropLeft) * this.width}${this.unit}`,
 		}).element;
 		// this.gobanDiv.onmouseleave = (e: MouseEvent) => {
 		// 	e.preventDefault();
@@ -237,35 +252,39 @@ class GobanPositionViewer {
 		withCoordinatesDiv.appendChild(cropContainerDiv);
 		this.rootElement.appendChild(withCoordinatesDiv);
 		// const emptyBorder = .5 * this.side / this.size;
-		const emptyBorder = 0;
 		for (let index = 0; index < this.size; index++) {
 			this.gobanDiv.appendChild(getOrCreateElement("div", `vertical-${index}`, {
 				position: "absolute",
-				height: `${this.side - this.bandWidth}${this.unit}`,
+				height: `${this.width - this.bandWidth}${this.unit}`,
 				width: "0.5px",
 				color: "black",
 				top: `${this.bandWidth / 2}${this.unit}`,
-				left: `${this.side * index / this.size + this.bandWidth / 2.}${this.unit}`,
+				left: `${this.width * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
 			}).element)
 			this.gobanDiv.appendChild(getOrCreateElement("div", `horizontal-${index}`, {
 				position: "absolute",
-				width: `${this.side - this.bandWidth}${this.unit}`,
+				width: `${this.width - this.bandWidth}${this.unit}`,
 				height: "0.5px",
 				color: "black",
 				left: `${this.bandWidth / 2}${this.unit}`,
-				top: `${this.side * index / this.size + this.bandWidth / 2.}${this.unit}`,
+				top: `${this.width * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
 			}).element)
 				// <div style={{}} />
 		}
 		this.drawHoshi();
-		this.drawCoordinates(withCoordinatesDiv);
+		if (this.coordinates) {
+			this.drawCoordinates(withCoordinatesDiv);
+		}
 	}
 
 	drawCoordinates(withCoordinatesDiv: HTMLElement) {
+		if (!this.coordinates) {
+			return;
+		}
 		for (let i = 0; i < this.size; i++) {
-			const top = (i + 0.5) * this.bandWidth - this.cropTop * this.side;
+			const top = (i + 1) * this.bandWidth - this.cropTop * this.width;
 			let baseStyle: Partial<CSSStyleDeclaration> = {
 				position: "absolute",
 				display: "flex",
@@ -279,7 +298,8 @@ class GobanPositionViewer {
 				height: `${this.bandWidth}${this.unit}`,
 				fontSize: `${this.bandWidth / 3}${this.unit}`,
 			}
-			if (top > 0) {
+			console.log(`label=${coordinatesLetters.charAt(i).toUpperCase() || `${i}`} top=${top}, height=${this.gobanHeight()} band=${this.bandWidth}`)
+			if (0 < top && top <= this.gobanHeight()) {
 				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-left`, {
 					...baseStyle,
 					top: `${top}${this.unit}`,
@@ -291,8 +311,8 @@ class GobanPositionViewer {
 					right: "0px",
 				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
 			}
-			const left = (i + 0.5) * this.bandWidth - this.cropLeft * this.side;
-			if (left > 0) {
+			const left = (i + 1) * this.bandWidth - this.cropLeft * this.width;
+			if (0 < left && left <= this.gobanWidth()) {
 				withCoordinatesDiv.appendChild(getOrCreateElement("div", `coordinate-${i}-top`, {
 					...baseStyle,
 					top: "0px",
