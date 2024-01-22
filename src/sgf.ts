@@ -99,6 +99,29 @@ export class SGFNode {
 
 	constructor(public properties: SGFProperty[] = [], public children: SGFNode[] = []) {}
 
+	/** Walk through the subtree, if f() return `false` -> stop "walking". */
+	walkWhile(f: (path: SGFNode[]) => boolean, path?: SGFNode[]): boolean {
+		if (!path) {
+			path = [this];
+		}
+		if (!f(path)) {
+			return false;
+		}
+		for (const sub of this?.children||[]) {
+			if (!sub.walkWhile(f, [...path, sub])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	walk(f: (subnode: SGFNode[]) => void) {
+		this.walkWhile((path: SGFNode[]) => {
+			f(path);
+			return true;
+		})
+	}
+
 	findPath(subnode: SGFNode, path?: SGFNode[]): SGFNode[] {
 		if (!path) {
 			path = [];

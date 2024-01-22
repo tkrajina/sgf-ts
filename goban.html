@@ -10,7 +10,7 @@
     <body>
         <span id="goban">
 
-(;BR[17k]DT[2024-01-14]GN[Friendly Match]PB[]PW[]RE[W+104.5]SZ[19]WR[4k]AW[cc][cf][ch][cm][dc][ec][fc][fd][fe][ff][fg][fq][gd][gh][jd][jf][jq][kd][ld][lg][nc][nh][oc][oi][pc][qp][qq][rm][rn][ro]AB[ci][cn][db][dd][dj][dm][dp][eb][eh][fb][fh][gc][ge][gf][gg][hb][hd][ie][jc][je][kc][mq][nd][ng][od][oh][pd][ph][pj][pp][pq][qf][qk][qm][qn][qo]PL[W]AP[Sabaki:0.52.2]CA[UTF-8]LB[gl:A][gm:1][hl:B][hm:2][il:C][im:3]TR[gn][hn][in]SQ[go][ho][io]CR[gp][hp][ip]MA[gq][hq][iq];W[cl]LB[cc:1][dc:A]CR[db]TR[eb]SQ[ec]MA[fb];B[ck];W[dl];B[el];W[ek];B[em];W[bn];B[ej];W[fk])
+(;GM[1]FF[4]SZ[19]AP[Sabaki:0.52.2]AB[ro:rq][pp:qp][oq:os]AW[qn:qo][rn][po][np:op][pq:ps][qq][rr]PL[B]VW[ll:ss]FG[4353:Black to play]CA[UTF-8](;B[rs];W[sr];B[qr]C[CORRECT])(;B[qs];W[qr];B[sr];W[rs];B[sq];W[so]))
 
         </span>
 
@@ -24,6 +24,6 @@
         <a id="sgf_editor" href="#">sgf</a>
         <a id="sgf_show" href="#">show sgf</a>
         <p id="goban_comment"></p>
-        <script>goban = new GobanViewer("goban", null, {cropTop: 5, cropBottom: 2, cropLeft: 2, cropRight: 10, coordinates: true})</script>
+        <script>goban = new GobanViewer("goban", null, {cropTop: 10, /* cropBottom: 2, */ cropLeft: 10, /* cropRight: 10, */ coordinates: true, mode: "PROBLEM"})</script>
     </body>
 </html>

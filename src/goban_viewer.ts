@@ -6,6 +6,26 @@ const coordinatesLetters = "abcdefghjklmnopqrst";
 
 type StoneElement = HTMLElement & { row: number, col: number };
 
+type SGFNodeWithMetadata = SGFNode & { pathToSolution?: boolean };
+
+function markPathsToSolution(node: SGFNode) {
+	node.walk((path: SGFNode[]) => {
+		if (!path?.length) {
+			return;
+		}
+		const last = path[path.length - 1];
+		if (last?.children?.length) {
+			return;
+		}
+		const com = last?.getProperty(Tag.Comment)
+		if (com?.trim()?.toLowerCase().indexOf("correct") == 0) {
+			for (const e of path) {
+				(e as SGFNodeWithMetadata).pathToSolution = true;
+			}
+		}
+	})
+}
+
 function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 	if (style) {
 		for (const key of Object.keys(style)) {
@@ -37,6 +57,12 @@ function createElement(name: string, id: string, style?: Partial<CSSStyleDeclara
 	return el;
 }
 
+enum GobanViewerMode {
+	PLAY = "PLAY",
+	PROBLEM = "PROBLEM",
+	GUESS_MOVE = "GUESS_MOVE",
+}
+
 class GobanViewer {
 
 	private positionViewer: GobanPositionViewer;
@@ -61,6 +87,9 @@ class GobanViewer {
 			}
 		}
 		this.rootNode = node;
+		if (opts?.mode == GobanViewerMode.PROBLEM) {
+			markPathsToSolution(this.rootNode);
+		}
 		this.currentNode = node;
 		opts.onClick = this.onClick.bind(this);
 		this.positionViewer = new GobanPositionViewer(elementId, node, opts);
@@ -73,6 +102,9 @@ class GobanViewer {
 			const child = this.currentNode.children[i];
 			let [_, childCoord] = child.playerAndCoordinates();
 			if (coord == childCoord) {
+				if ((child as SGFNodeWithMetadata)?.pathToSolution) {
+					alert("yes!");
+				}
 				this.goTo(child);
 				return;
 			}
@@ -122,6 +154,7 @@ class GobanViewer {
 }
 
 interface GobanViewerOpts {
+	mode?: GobanViewerMode,
 	side?: number,
 	unit?: string,
 	cropTop: number,

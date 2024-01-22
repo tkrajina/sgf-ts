@@ -7,7 +7,7 @@ describe('goban placements', () => {
 	test('apply node with adding stones', () => {
 		const g = new SGFGoban(5);
 		console.log(g.debugStr())
-		g.apply(new SGFNode([
+		g.applyNodes(new SGFNode([
 			new SGFProperty(Tag.AddBlack, ["aa"]),
 			new SGFProperty(Tag.AddWhite, ["ab"]),
 			new SGFProperty(Tag.AddBlack, [rowColumnToCoordinate([3, 4])]),
@@ -29,7 +29,7 @@ W....
 	test('ignore invalid placement', () => {
 		const g = new SGFGoban(5);
 		console.log(g.debugStr())
-		g.apply(new SGFNode([
+		g.applyNodes(new SGFNode([
 			new SGFProperty(Tag.Black, [rowColumnToCoordinate([1, 5])]),
 		], []));
 		expect(g.debugStr()).toBe(`.....
