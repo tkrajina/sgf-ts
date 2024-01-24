@@ -17,9 +17,6 @@ function markPathsToSolution(node: SGFNode) {
 			return;
 		}
 		const last = path[path.length - 1];
-		if (last?.children?.length) {
-			return;
-		}
 		const com = last?.getProperty(Tag.Comment)
 		if (com?.trim()?.toLowerCase().indexOf("correct") == 0) {
 			for (const e of path) {
@@ -158,9 +155,9 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 					this.autoPlayTimeout = null;
 					if (!child.children?.length) {
 						if ((child as SGFNodeWithMetadata)?.pathToSolution) {
-							alert("Correct");
+							alert("Correct! :)");
 						} else {
-							alert("Incorrect");
+							alert("Incorrect :(");
 						}
 						return;
 					}
