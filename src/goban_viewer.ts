@@ -64,16 +64,18 @@ enum GobanViewerMode {
 	GUESS_MOVE = "GUESS_MOVE",
 }
 
-class GobanViewer {
+abstract class AbstractGobanViewer {
 
-	private positionViewer: GobanPositionViewer;
+	protected elementId: string;
+	protected positionViewer: GobanPositionViewer;
 
-	rootNode: SGFNode;
-	currentNode: SGFNode;
-	goban: SGFGoban;
+	protected rootNode: SGFNode;
+	protected currentNode: SGFNode;
+	protected goban: SGFGoban;
 	autoPlayColor: SGFColor | undefined = undefined;
 
-	constructor(private elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
+	constructor(elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
+		this.elementId = elementId;
 		const rootElement = document.getElementById(this.elementId);
 		if (!rootElement) {
 			alert("no goban element found");
@@ -93,9 +95,31 @@ class GobanViewer {
 			markPathsToSolution(this.rootNode);
 		}
 		this.currentNode = node;
-		opts.onClick = this.onClick.bind(this);
+		opts.onClick = (row: number, col: number, color: SGFColor) => {
+			this.onClick(row, col, color);
+		}
 		this.positionViewer = new GobanPositionViewer(elementId, node, opts);
 		this.goban = new SGFGoban();
+	}
+
+	goTo(node?: SGFNode) {
+		if (!node) {
+			return;
+		}
+		this.currentNode = node;
+		const path = this.rootNode.findPath(node);
+		this.goban = new SGFGoban();
+		this.goban.applyNodes(...path);
+		this.positionViewer.draw(this.goban);
+	}
+
+	abstract onClick(row: number, col: number, color: SGFColor);
+}
+
+class GobanViewer extends AbstractGobanViewer {
+
+	constructor(elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
+		super(elementId, node, opts);
 	}
 
 	autoPlayTimeout: any;
@@ -151,23 +175,12 @@ class GobanViewer {
 		if (this.autoPlayTimeout) {
 			return;
 		}
-		// TODO: Autoclick colos
+		// TODO: Autoclick colors
 		const node = this.currentNode.children?.[0];
 		if (!node) {
 			return;
 		}
 		this.goTo(node);
-	}
-
-	goTo(node?: SGFNode) {
-		if (!node) {
-			return;
-		}
-		this.currentNode = node;
-		const path = this.rootNode.findPath(node);
-		this.goban = new SGFGoban();
-		this.goban.applyNodes(...path);
-		this.positionViewer.draw(this.goban);
 	}
 
 	previous() {
