@@ -133,7 +133,7 @@ abstract class AbstractGobanViewer {
 	abstract onClick(row: number, col: number, color: SGFColor);
 }
 
-class GobanViewer extends AbstractGobanViewer {
+class ProblemGobanViewer extends AbstractGobanViewer {
 
 	constructor(elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
 		super(elementId, node, opts);
