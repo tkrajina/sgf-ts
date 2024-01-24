@@ -170,6 +170,14 @@ export class SGFNode {
 		return props;
 	}
 
+	getComment() {
+		return this.getProperty(Tag.Comment)
+	}
+
+	getComments() {
+		return this.getProperties(Tag.Comment)
+	}
+
 	getProperty(prop: string) {
 		for (const i in this.properties) {
 			if (this.properties[i].name === prop) {

@@ -28,14 +28,14 @@ function markPathsToSolution(node: SGFNode) {
 
 function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 	if (style) {
-		for (const key of Object.keys(style)) {
+		for (const key of Object.keys(style)) {
 			el.style[key] = style[key];
 		}
 	}
 }
 
 function getOrCreateElement(prefix: string, name: string, id: string, style?: Partial<CSSStyleDeclaration>, innerHTML?: string) {
-	id = prefix + "__" + id;
+	id = prefix + "_" + id;
 	let el = document.getElementById(id);
 	let created = false;
 	if (!el) {
@@ -100,6 +100,15 @@ abstract class AbstractGobanViewer {
 		}
 		this.positionViewer = new GobanPositionViewer(elementId, node, opts);
 		this.goban = new SGFGoban();
+		this.updateComment();
+	}
+
+	updateComment() {
+		const c = getOrCreateElement(this.elementId, "div", "comment", {});
+		if (c.created) {
+			console.warn("Comment element not found")
+		}
+		c.element.innerHTML = this.currentNode?.getComment() || "";
 	}
 
 	goTo(node?: SGFNode) {
@@ -111,6 +120,7 @@ abstract class AbstractGobanViewer {
 		this.goban = new SGFGoban();
 		this.goban.applyNodes(...path);
 		this.positionViewer.draw(this.goban);
+		this.updateComment();
 	}
 
 	abstract onClick(row: number, col: number, color: SGFColor);
@@ -214,7 +224,7 @@ interface GobanViewerOpts {
 
 class GobanPositionViewer {
 
-	idPrefix = Math.random() + "_" + Date.now();
+	idPrefix: string;
 
 	size = 19;
 
@@ -248,6 +258,7 @@ class GobanPositionViewer {
 	private onClick?: (row: number, col: number, SGFColor) => void;
 
 	constructor(private elementId: string, node: SGFNode, opts?: GobanViewerOpts) {
+		this.idPrefix = elementId;
 		this.width = opts?.side || 50;
 		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
