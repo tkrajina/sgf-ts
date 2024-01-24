@@ -114,6 +114,10 @@ abstract class AbstractGobanViewer {
 		c.element.innerHTML = this.currentNode?.getComment() || "";
 	}
 
+	reset() {
+		this.goTo(this.rootNode);
+	}
+
 	goTo(node?: SGFNode) {
 		if (!node) {
 			return;

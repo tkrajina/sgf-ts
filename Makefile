@@ -19,6 +19,6 @@ single-js: clean
 
 	tsc all.ts
 	mv all.js pages
-	open pages/goban.html
+	open pages/problem.html
 	rm all.ts
 
