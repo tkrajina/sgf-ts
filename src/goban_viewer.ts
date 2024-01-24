@@ -11,6 +11,8 @@ type SGFNodeWithMetadata = SGFNode & {
 	offPath?: boolean;
 };
 
+const correctWords = ["correct", "točno", "+", "right"];
+
 function markPathsToSolution(node: SGFNode) {
 	node.walk((path: SGFNode[]) => {
 		if (!path?.length) {
@@ -18,9 +20,11 @@ function markPathsToSolution(node: SGFNode) {
 		}
 		const last = path[path.length - 1];
 		const com = last?.getProperty(Tag.Comment)
-		if (com?.trim()?.toLowerCase().indexOf("correct") == 0) {
-			for (const e of path) {
-				(e as SGFNodeWithMetadata).pathToSolution = true;
+		for (const word of correctWords) {
+			if (com?.trim()?.toLowerCase().indexOf(word) == 0) {
+				for (const e of path) {
+					(e as SGFNodeWithMetadata).pathToSolution = true;
+				}
 			}
 		}
 	})
@@ -644,6 +648,7 @@ class GobanPositionViewer {
 	}
 
 	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string}) {
+		this.drawStone(row, column);
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneId = `stone-${row}-${column}`;
 		const stoneDiv = document.getElementById(stoneId);
