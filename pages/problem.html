@@ -16,14 +16,14 @@
         <strong><p id="goban1_comment"></p></strong>
 
         <script>
-            function startProblem(node) {
-                goban1 = new GobanViewer("goban1", node, {cropTop: 10, /* cropBottom: 2, */ cropLeft: 10, /* cropRight: 10, */ coordinates: true, mode: "PROBLEM"})
-            }
             document.addEventListener('keydown', async (event) => {
                 if (event.metaKey && (event.code == "KeyV")) {
                     const sgf = await navigator.clipboard.readText();
                     const node = parseSGF(sgf);
-                    startProblem(node);
+                    const params = {sgf: sgf};
+                    if (window.confirm("Redirect to new SGF?")) {
+                        window.location.href = `${window.location.protocol}//${window.location.host}${window.location.pathname}?sgf=${encodeURI(sgf)}`;
+                    }
                     return;
                 }
             });
@@ -35,6 +35,6 @@
             }
             const node = parseSGF(sgf);
         </script>
-        <script>startProblem(node)</script>
+        <script>goban1 = new GobanViewer("goban1", node, {cropTop: 10, /* cropBottom: 2, */ cropLeft: 10, /* cropRight: 10, */ coordinates: true, mode: "PROBLEM"})</script>
     </body>
 </html>
