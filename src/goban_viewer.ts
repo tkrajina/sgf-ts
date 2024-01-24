@@ -241,7 +241,7 @@ class GobanPositionViewer {
 	originalWidth: number;
 
 	/** Side of the goban including the cropped parts */
-	width = 50; // This can change when cropping and zooming
+	width = 80; // This can change when cropping and zooming
 
 	bandWidth: number;
 	unit = "vmin";
