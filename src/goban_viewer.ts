@@ -556,6 +556,10 @@ class GobanPositionViewer {
 		*/
 	}
 
+	private getStoneElement(row: number, col: number) {
+		return document.getElementById(`${this.idPrefix}_stone-${row}-${col}`);
+	}
+
 	private drawStone(row: number, col: number) {
 		const color = this.goban.goban?.[row]?.[col];
 		let cssColor = "";
@@ -581,6 +585,9 @@ class GobanPositionViewer {
 			top: `${row * this.bandWidth}${this.unit}`,
 			left: `${col * this.bandWidth}${this.unit}`,
 		})
+		if (this.getStoneElement(row, col) == stoneElement.element) {
+			console.error("stone element id invalid!")
+		}
 		if (stoneElement.created) {
 			this.gobanDiv.appendChild(stoneElement.element);
 			(stoneElement.element as StoneElement).row = row;
@@ -602,7 +609,6 @@ class GobanPositionViewer {
 				backgroundColor: null,
 			});
 		}
-
 	}
 
 	private onMouseEnter(row: number, col: number) {
@@ -650,11 +656,7 @@ class GobanPositionViewer {
 	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string}) {
 		this.drawStone(row, column);
 		console.log(`Label ${label} on ${row},${column}`);
-		const stoneId = `stone-${row}-${column}`;
-		const stoneDiv = document.getElementById(stoneId);
-		if (!stoneDiv) {
-			console.error("no stone div found for id " + stoneId)
-		}
+		const stoneDiv = this.getStoneElement(row, column);
 		const div = getOrCreateElement(this.idPrefix, "div", `label-${row}-${column}`, {
 			color: props.color,
 			display: "flex",

@@ -1267,21 +1267,22 @@ var Goban = /** @class */ (function () {
     return Goban;
 }());
 var coordinatesLetters = "abcdefghjklmnopqrst";
+var correctWords = ["correct", "točno", "+", "right"];
 function markPathsToSolution(node) {
     node.walk(function (path) {
-        var _a, _b;
+        var _a;
         if (!(path === null || path === void 0 ? void 0 : path.length)) {
             return;
         }
         var last = path[path.length - 1];
-        if ((_a = last === null || last === void 0 ? void 0 : last.children) === null || _a === void 0 ? void 0 : _a.length) {
-            return;
-        }
         var com = last === null || last === void 0 ? void 0 : last.getProperty(Tag.Comment);
-        if (((_b = com === null || com === void 0 ? void 0 : com.trim()) === null || _b === void 0 ? void 0 : _b.toLowerCase().indexOf("correct")) == 0) {
-            for (var _i = 0, path_1 = path; _i < path_1.length; _i++) {
-                var e = path_1[_i];
-                e.pathToSolution = true;
+        for (var _i = 0, correctWords_1 = correctWords; _i < correctWords_1.length; _i++) {
+            var word = correctWords_1[_i];
+            if (((_a = com === null || com === void 0 ? void 0 : com.trim()) === null || _a === void 0 ? void 0 : _a.toLowerCase().indexOf(word)) == 0) {
+                for (var _b = 0, path_1 = path; _b < path_1.length; _b++) {
+                    var e = path_1[_b];
+                    e.pathToSolution = true;
+                }
             }
         }
     });
@@ -1404,10 +1405,10 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
                     _this.autoPlayTimeout = null;
                     if (!((_a = child.children) === null || _a === void 0 ? void 0 : _a.length)) {
                         if (child === null || child === void 0 ? void 0 : child.pathToSolution) {
-                            alert("Correct");
+                            alert("Correct! :)");
                         }
                         else {
-                            alert("Incorrect");
+                            alert("Incorrect :(");
                         }
                         return;
                     }
@@ -1746,6 +1747,9 @@ var GobanPositionViewer = /** @class */ (function () {
     </div>
         */
     };
+    GobanPositionViewer.prototype.getStoneElement = function (row, col) {
+        return document.getElementById("".concat(this.idPrefix, "_stone-").concat(row, "-").concat(col));
+    };
     GobanPositionViewer.prototype.drawStone = function (row, col) {
         var _this = this;
         var _a, _b;
@@ -1773,6 +1777,9 @@ var GobanPositionViewer = /** @class */ (function () {
             top: "".concat(row * this.bandWidth).concat(this.unit),
             left: "".concat(col * this.bandWidth).concat(this.unit),
         });
+        if (this.getStoneElement(row, col) == stoneElement.element) {
+            console.error("stone element id invalid!");
+        }
         if (stoneElement.created) {
             this.gobanDiv.appendChild(stoneElement.element);
             stoneElement.element.row = row;
@@ -1837,12 +1844,9 @@ var GobanPositionViewer = /** @class */ (function () {
         });
     };
     GobanPositionViewer.prototype.drawLabel = function (row, column, label, props) {
+        this.drawStone(row, column);
         console.log("Label ".concat(label, " on ").concat(row, ",").concat(column));
-        var stoneId = "stone-".concat(row, "-").concat(column);
-        var stoneDiv = document.getElementById(stoneId);
-        if (!stoneDiv) {
-            console.error("no stone div found for id " + stoneId);
-        }
+        var stoneDiv = this.getStoneElement(row, column);
         var div = getOrCreateElement(this.idPrefix, "div", "label-".concat(row, "-").concat(column), {
             color: props.color,
             display: "flex",
