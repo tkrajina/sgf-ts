@@ -6,7 +6,10 @@ const coordinatesLetters = "abcdefghjklmnopqrst";
 
 type StoneElement = HTMLElement & { row: number, col: number };
 
-type SGFNodeWithMetadata = SGFNode & { pathToSolution?: boolean };
+type SGFNodeWithMetadata = SGFNode & {
+	pathToSolution?: boolean;
+	offPath?: boolean;
+};
 
 function markPathsToSolution(node: SGFNode) {
 	node.walk((path: SGFNode[]) => {
@@ -91,7 +94,7 @@ abstract class AbstractGobanViewer {
 			}
 		}
 		this.rootNode = node;
-		if (opts?.mode == GobanViewerMode.PROBLEM) {
+		if (opts?.mode == GobanViewerMode.PROBLEM) { // TODO
 			markPathsToSolution(this.rootNode);
 		}
 		this.currentNode = node;
@@ -153,7 +156,7 @@ class GobanViewer extends AbstractGobanViewer {
 						if ((child as SGFNodeWithMetadata)?.pathToSolution) {
 							alert("Correct");
 						} else {
-							alert("Incorrecr");
+							alert("Incorrect");
 						}
 						return;
 					}
@@ -170,7 +173,9 @@ class GobanViewer extends AbstractGobanViewer {
 				return;
 			}
 		}
-		const node = new SGFNode();
+		const node = (new SGFNode()) as SGFNodeWithMetadata;
+		node.offPath = true;
+		node.setProperty(Tag.Comment, "Wrong (off path)");
 		node.setMove(color, coord);
 		try {
 			this.goban.applyNodes(node); // TODO: Check for errors
@@ -391,6 +396,7 @@ class GobanPositionViewer {
 				width: `${this.bandWidth}${this.unit}`,
 				height: `${this.bandWidth}${this.unit}`,
 				fontSize: `${this.bandWidth / 3}${this.unit}`,
+				color: "black"
 			}
 			console.log(`label=${coordinatesLetters.charAt(i).toUpperCase() || `${i}`} top=${top}, height=${this.gobanHeight()} band=${this.bandWidth}`)
 			if (0 < top && top <= this.gobanHeight()) {
