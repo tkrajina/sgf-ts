@@ -17,7 +17,9 @@
 
         <script>
             document.addEventListener('keydown', async (event) => {
-                if (event.metaKey && (event.code == "KeyV")) {
+                console.log(event.metaKey, "...", event.code)
+                if (event.metaKey && event.code == "KeyV") {
+                    event.preventDefault();
                     const sgf = await navigator.clipboard.readText();
                     const node = parseSGF(sgf);
                     const params = {sgf: sgf};
@@ -26,6 +28,18 @@
                         window.location.href = `${window.location.protocol}//${window.location.host}${window.location.pathname}?crop=${crop}&sgf=${encodeURI(sgf)}`;
                     }
                     return;
+                }
+                if (event.metaKey && event.code == "KeyU") {
+                    event.preventDefault();
+                    const url = document.location.toString();
+                    navigator.clipboard.writeText(url).then(() => {
+                        if (window.confirm(`Copied URL to clipboard, shorten the URL?`)) {
+                            let tinyurl = "https://tinyurl.com/create.php?url=" + url;
+                            window.open(tinyurl);
+                        }
+                    }, err => {
+                        alert(`Failed to copy: ${err}`);
+                    });
                 }
             });
             const params = new URLSearchParams(window.location.search);
