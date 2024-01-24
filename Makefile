@@ -18,6 +18,7 @@ single-js: clean
 	cat src/goban_viewer.ts | grep -v -E "import.*from" >> all.ts
 
 	tsc all.ts
-
-	open goban.html
+	mv all.js pages
+	open pages/goban.html
+	rm all.ts
 
