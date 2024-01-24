@@ -1612,13 +1612,13 @@ var GobanPositionViewer = /** @class */ (function () {
             };
             console.log("label=".concat(coordinatesLetters.charAt(i).toUpperCase() || "".concat(i), " top=").concat(top_1, ", height=").concat(this.gobanHeight(), " band=").concat(this.bandWidth));
             if (0 < top_1 && top_1 <= this.gobanHeight()) {
-                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-left"), __assign(__assign({}, baseStyle), { top: "".concat(top_1).concat(this.unit), left: "0px" }), coordinatesLetters.charAt(i).toUpperCase() || "".concat(i)).element);
-                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-right"), __assign(__assign({}, baseStyle), { top: "".concat(top_1).concat(this.unit), right: "0px" }), coordinatesLetters.charAt(i).toUpperCase() || "".concat(i)).element);
+                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-left"), __assign(__assign({}, baseStyle), { top: "".concat(top_1).concat(this.unit), left: "0px" }), "".concat(this.size - i)).element);
+                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-right"), __assign(__assign({}, baseStyle), { top: "".concat(top_1).concat(this.unit), right: "0px" }), "".concat(this.size - i)).element);
             }
             var left = (i + 1) * this.bandWidth - this.cropLeft * this.width;
             if (0 < left && left <= this.gobanWidth()) {
-                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-top"), __assign(__assign({}, baseStyle), { top: "0px", left: "".concat(left).concat(this.unit) }), "".concat(i + 1)).element);
-                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-bottom"), __assign(__assign({}, baseStyle), { bottom: "0px", left: "".concat(left).concat(this.unit) }), "".concat(i + 1)).element);
+                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-top"), __assign(__assign({}, baseStyle), { top: "0px", left: "".concat(left).concat(this.unit) }), coordinatesLetters.charAt(i).toUpperCase() || "".concat(i)).element);
+                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-bottom"), __assign(__assign({}, baseStyle), { bottom: "0px", left: "".concat(left).concat(this.unit) }), coordinatesLetters.charAt(i).toUpperCase() || "".concat(i)).element);
             }
         }
     };

@@ -409,12 +409,12 @@ class GobanPositionViewer {
 					...baseStyle,
 					top: `${top}${this.unit}`,
 					left: "0px",
-				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
+				}, `${this.size - i}`).element);
 				withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `coordinate-${i}-right`, {
 					...baseStyle,
 					top: `${top}${this.unit}`,
 					right: "0px",
-				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
+				}, `${this.size - i}`).element);
 			}
 			const left = (i + 1) * this.bandWidth - this.cropLeft * this.width;
 			if (0 < left && left <= this.gobanWidth()) {
@@ -422,12 +422,12 @@ class GobanPositionViewer {
 					...baseStyle,
 					top: "0px",
 					left: `${left}${this.unit}`,
-				}, `${i + 1}`).element);
+				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
 				withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", `coordinate-${i}-bottom`, {
 					...baseStyle,
 					bottom: "0px",
 					left: `${left}${this.unit}`,
-				}, `${i + 1}`).element);
+				}, coordinatesLetters.charAt(i).toUpperCase() || `${i}`).element);
 			}
 		}
 	}
