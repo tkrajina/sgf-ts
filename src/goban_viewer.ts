@@ -138,7 +138,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 
 	constructor(elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
 		super(elementId, node, opts);
-	}
+	};
 
 	autoPlayTimeout: any;
 
@@ -224,9 +224,7 @@ interface GobanViewerOpts {
 	mode?: GobanViewerMode,
 	side?: number,
 	unit?: string,
-	cropTop: number,
-	cropRight: number,
-	cropBottom: number,
+	crop: "auto" | [number, number, number, number],
 	cropLeft: number
 	onClick?: (row: number, col: number, coloe: SGFColor) => void;
 	coordinates?: boolean;
@@ -252,8 +250,8 @@ class GobanPositionViewer {
 	gobanDiv: HTMLElement;
 	tmpHoverStone: HTMLElement;
 
-	cropTop = .25;
-	cropRight = .25;
+	cropTop = 0;
+	cropRight = 0;
 	cropBottom = 0;
 	cropLeft = 0;
 
@@ -273,10 +271,29 @@ class GobanPositionViewer {
 		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);
-		this.cropTop = this.cropFactor(opts.cropTop);
-		this.cropRight = this.cropFactor(opts.cropRight);
-		this.cropBottom = this.cropFactor(opts.cropBottom);
-		this.cropLeft = this.cropFactor(opts.cropLeft);
+		if (opts?.crop) {
+			if (opts.crop == "auto") {
+				const bounds = node.bounds();
+				let top = bounds.rowMin;
+				let right = this.size - bounds.colMax;
+				let bottom = this.size - bounds.rowMax;
+				let left = bounds.colMin;
+				const safeDistFromBorder = 6;
+				top = top < safeDistFromBorder ? 0 : top - 2;
+				bottom = bottom < safeDistFromBorder ? 0 : bottom - 2;
+				left = left < safeDistFromBorder ? 0 : left - 2;
+				right = right < safeDistFromBorder ? 0 : right - 2;
+				this.cropTop = this.cropFactor(top);
+				this.cropRight = this.cropFactor(right);
+				this.cropBottom = this.cropFactor(bottom);
+				this.cropLeft = this.cropFactor(left);
+			} else {
+				this.cropTop = this.cropFactor(opts.crop[0] as number || 0);
+				this.cropRight = this.cropFactor(opts.crop[1] as number || 0);
+				this.cropBottom = this.cropFactor(opts.crop[2] as number || 0);
+				this.cropLeft = this.cropFactor(opts.crop[3] as number || 0);
+			}
+		}
 		this.onClick = opts?.onClick;
 		this.coordinates = opts?.coordinates;
 		if (!this.rootElement) {

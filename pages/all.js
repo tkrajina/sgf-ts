@@ -36,7 +36,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SGFGoban = exports.isAlpha = exports.SGFParser = exports.parseSGFCollection = exports.parseSGF = exports.SGFProperty = exports.SGFNode = exports.rowColumnToCoordinate = exports.coordinateToRowColumn = exports.SGFColor = exports.expandCoordinatesRange = exports.Tag = void 0;
+exports.SGFGoban = exports.isAlpha = exports.SGFParser = exports.parseSGFCollection = exports.parseSGF = exports.SGFProperty = exports.SGFNode = exports.rowColumnToCoordinate = exports.coordinateToRowColumn = exports.SGFColor = exports.expandCoordinatesRange = exports.Bounds = exports.Tag = void 0;
 var Tag;
 (function (Tag) {
     Tag["AddBlack"] = "AB";
@@ -78,6 +78,26 @@ var Tag;
     Tag["X"] = "MA";
     Tag["Label"] = "LB";
 })(Tag || (exports.Tag = Tag = {}));
+var Bounds = /** @class */ (function () {
+    function Bounds(rowMax, rowMin, colMax, colMin) {
+        if (rowMax === void 0) { rowMax = NaN; }
+        if (rowMin === void 0) { rowMin = NaN; }
+        if (colMax === void 0) { colMax = NaN; }
+        if (colMin === void 0) { colMin = NaN; }
+        this.rowMax = rowMax;
+        this.rowMin = rowMin;
+        this.colMax = colMax;
+        this.colMin = colMin;
+    }
+    Bounds.prototype.apply = function (row, col) {
+        this.rowMin = isNaN(this.rowMin) ? row : Math.min(this.rowMin, row);
+        this.rowMax = isNaN(this.rowMax) ? row : Math.max(this.rowMin, row);
+        this.colMin = isNaN(this.colMin) ? col : Math.min(this.colMin, col);
+        this.colMax = isNaN(this.colMax) ? col : Math.max(this.colMin, col);
+    };
+    return Bounds;
+}());
+exports.Bounds = Bounds;
 function expandCoordinatesRange(_coords) {
     if (!_coords) {
         return [];
@@ -177,6 +197,29 @@ var SGFNode = /** @class */ (function () {
             }
         }
         return null;
+    };
+    SGFNode.prototype.bounds = function () {
+        var bounds = new Bounds();
+        this.walk(function (path) {
+            var node = path[path.length - 1];
+            var takenCoords = [];
+            for (var _i = 0, _a = node.getProperties(Tag.AddWhite) || []; _i < _a.length; _i++) {
+                var tr = _a[_i];
+                takenCoords.push.apply(takenCoords, expandCoordinatesRange(tr));
+            }
+            for (var _b = 0, _c = node.getProperties(Tag.AddBlack) || []; _b < _c.length; _b++) {
+                var tr = _c[_b];
+                takenCoords.push.apply(takenCoords, expandCoordinatesRange(tr));
+            }
+            takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.Black)));
+            takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.White)));
+            for (var _d = 0, takenCoords_1 = takenCoords; _d < takenCoords_1.length; _d++) {
+                var coord = takenCoords_1[_d];
+                var _e = coordinateToRowColumn(coord), row = _e[0], col = _e[1];
+                bounds.apply(row, col);
+            }
+        });
+        return bounds;
     };
     SGFNode.prototype.findFirstProperty = function (p) {
         var props = this.getProperties(p);
@@ -1385,6 +1428,7 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
     function ProblemGobanViewer(elementId, node, opts) {
         return _super.call(this, elementId, node, opts) || this;
     }
+    ;
     ProblemGobanViewer.prototype.onClick = function (row, col, color) {
         var _this = this;
         var _a;
@@ -1480,8 +1524,8 @@ var GobanPositionViewer = /** @class */ (function () {
         /** Side of the goban including the cropped parts */
         this.width = 80; // This can change when cropping and zooming
         this.unit = "vmin";
-        this.cropTop = .25;
-        this.cropRight = .25;
+        this.cropTop = 0;
+        this.cropRight = 0;
         this.cropBottom = 0;
         this.cropLeft = 0;
         /** Elements to be deleted before every position change */
@@ -1492,10 +1536,30 @@ var GobanPositionViewer = /** @class */ (function () {
         this.originalWidth = this.width;
         this.unit = (opts === null || opts === void 0 ? void 0 : opts.unit) || "vmin";
         this.rootElement = document.getElementById(this.elementId);
-        this.cropTop = this.cropFactor(opts.cropTop);
-        this.cropRight = this.cropFactor(opts.cropRight);
-        this.cropBottom = this.cropFactor(opts.cropBottom);
-        this.cropLeft = this.cropFactor(opts.cropLeft);
+        if (opts === null || opts === void 0 ? void 0 : opts.crop) {
+            if (opts.crop == "auto") {
+                var bounds = node.bounds();
+                var top_1 = bounds.rowMin;
+                var right = this.size - bounds.colMax;
+                var bottom = this.size - bounds.rowMax;
+                var left = bounds.colMin;
+                var safeDistFromBorder = 6;
+                top_1 = top_1 < safeDistFromBorder ? 0 : top_1 - 2;
+                bottom = bottom < safeDistFromBorder ? 0 : bottom - 2;
+                left = left < safeDistFromBorder ? 0 : left - 2;
+                right = right < safeDistFromBorder ? 0 : right - 2;
+                this.cropTop = this.cropFactor(top_1);
+                this.cropRight = this.cropFactor(right);
+                this.cropBottom = this.cropFactor(bottom);
+                this.cropLeft = this.cropFactor(left);
+            }
+            else {
+                this.cropTop = this.cropFactor(opts.crop[0] || 0);
+                this.cropRight = this.cropFactor(opts.crop[1] || 0);
+                this.cropBottom = this.cropFactor(opts.crop[2] || 0);
+                this.cropLeft = this.cropFactor(opts.crop[3] || 0);
+            }
+        }
         this.onClick = opts === null || opts === void 0 ? void 0 : opts.onClick;
         this.coordinates = opts === null || opts === void 0 ? void 0 : opts.coordinates;
         if (!this.rootElement) {
@@ -1595,7 +1659,7 @@ var GobanPositionViewer = /** @class */ (function () {
             return;
         }
         for (var i = 0; i < this.size; i++) {
-            var top_1 = (i + 1) * this.bandWidth - this.cropTop * this.width;
+            var top_2 = (i + 1) * this.bandWidth - this.cropTop * this.width;
             var baseStyle = {
                 position: "absolute",
                 display: "flex",
@@ -1610,10 +1674,10 @@ var GobanPositionViewer = /** @class */ (function () {
                 fontSize: "".concat(this.bandWidth / 3).concat(this.unit),
                 color: "black"
             };
-            console.log("label=".concat(coordinatesLetters.charAt(i).toUpperCase() || "".concat(i), " top=").concat(top_1, ", height=").concat(this.gobanHeight(), " band=").concat(this.bandWidth));
-            if (0 < top_1 && top_1 <= this.gobanHeight()) {
-                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-left"), __assign(__assign({}, baseStyle), { top: "".concat(top_1).concat(this.unit), left: "0px" }), "".concat(this.size - i)).element);
-                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-right"), __assign(__assign({}, baseStyle), { top: "".concat(top_1).concat(this.unit), right: "0px" }), "".concat(this.size - i)).element);
+            console.log("label=".concat(coordinatesLetters.charAt(i).toUpperCase() || "".concat(i), " top=").concat(top_2, ", height=").concat(this.gobanHeight(), " band=").concat(this.bandWidth));
+            if (0 < top_2 && top_2 <= this.gobanHeight()) {
+                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-left"), __assign(__assign({}, baseStyle), { top: "".concat(top_2).concat(this.unit), left: "0px" }), "".concat(this.size - i)).element);
+                withCoordinatesDiv.appendChild(getOrCreateElement(this.idPrefix, "div", "coordinate-".concat(i, "-right"), __assign(__assign({}, baseStyle), { top: "".concat(top_2).concat(this.unit), right: "0px" }), "".concat(this.size - i)).element);
             }
             var left = (i + 1) * this.bandWidth - this.cropLeft * this.width;
             if (0 < left && left <= this.gobanWidth()) {

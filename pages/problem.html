@@ -25,8 +25,7 @@
                     const node = parseSGF(sgf);
                     const params = {sgf: sgf};
                     if (window.confirm("Redirect to new SGF?")) {
-                        const crop = window.prompt("Crop (top,right,bottom,left)?") || "0,0,0,0";
-                        window.location.href = `${window.location.protocol}//${window.location.host}${window.location.pathname}?crop=${crop}&sgf=${encodeURI(sgf)}`;
+                        window.location.href = `${window.location.protocol}//${window.location.host}${window.location.pathname}?sgf=${encodeURI(sgf)}`;
                     }
                     return;
                 }
@@ -52,6 +51,6 @@
             const node = parseSGF(sgf);
             const crop = (params.get("crop") || "").split(",").map(s => parseInt(s) || 0);
         </script>
-        <script>goban1 = new ProblemGobanViewer("goban1", node, {cropTop: crop[0]||0, cropRight: crop[1]||0, cropBottom: crop[2]||0, cropLeft: crop[3]||0, coordinates: true, mode: "PROBLEM"})</script>
+        <script>goban1 = new ProblemGobanViewer("goban1", node, {crop: "auto", coordinates: true, mode: "PROBLEM"})</script>
     </body>
 </html>

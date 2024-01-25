@@ -41,6 +41,18 @@ export enum Tag { // TODO: Rename
 
 }
 
+export class Bounds {
+	constructor(public rowMax = NaN, public rowMin = NaN, public colMax = NaN, public colMin = NaN) {
+	}
+
+	apply(row: number, col: number) {
+		this.rowMin = isNaN(this.rowMin) ? row : Math.min(this.rowMin, row);
+		this.rowMax = isNaN(this.rowMax) ? row : Math.max(this.rowMin, row);
+		this.colMin = isNaN(this.colMin) ? col : Math.min(this.colMin, col);
+		this.colMax = isNaN(this.colMax) ? col : Math.max(this.colMin, col);
+	}
+}
+
 export function expandCoordinatesRange(_coords: string | SGFCoordinate | string[]) {
 	if (!_coords) {
 		return [];
@@ -143,28 +155,24 @@ export class SGFNode {
 	}
 
 	bounds() {
-		var rowMax = NaN,
-			rowMin = NaN,
-			colMax = NaN, 
-			colMin = NaN;
-		const takenCoords = [];
-		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.AddWhite)))
-		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.AddBlack)))
-		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.Black)))
-		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.White)))
-		for (const coord of takenCoords) {
-			let [row, col] = coordinateToRowColumn(coord)
-			rowMin = isNaN(rowMin) ? row : Math.min(rowMin, row);
-			rowMax = isNaN(rowMax) ? row : Math.max(rowMin, row);
-			colMin = isNaN(colMin) ? col : Math.min(colMin, col);
-			colMax = isNaN(colMax) ? col : Math.max(colMin, col);
-		}
-		return {
-			rowMin: rowMin,
-			rowMax: rowMax,
-			colMin: colMin,
-			colMax: colMax,
-		}
+		const bounds = new Bounds();
+		this.walk((path: SGFNode[]) => {
+			const node = path[path.length - 1];
+			const takenCoords = [];
+			for (const tr of node.getProperties(Tag.AddWhite) || []) {
+				takenCoords.push(...expandCoordinatesRange(tr))
+			}
+			for (const tr of node.getProperties(Tag.AddBlack) || []) {
+				takenCoords.push(...expandCoordinatesRange(tr))
+			}
+			takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.Black)))
+			takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.White)))
+			for (const coord of takenCoords) {
+				let [row, col] = coordinateToRowColumn(coord)
+				bounds.apply(row, col);
+			}
+		})
+		return bounds;
 	}
 
 	findFirstProperty(p: Tag | string) {
