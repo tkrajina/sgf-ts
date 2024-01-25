@@ -142,6 +142,31 @@ export class SGFNode {
 		return null;
 	}
 
+	bounds() {
+		var rowMax = NaN,
+			rowMin = NaN,
+			colMax = NaN, 
+			colMin = NaN;
+		const takenCoords = [];
+		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.AddWhite)))
+		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.AddBlack)))
+		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.Black)))
+		takenCoords.push(...expandCoordinatesRange(this.getProperty(Tag.White)))
+		for (const coord of takenCoords) {
+			let [row, col] = coordinateToRowColumn(coord)
+			rowMin = isNaN(rowMin) ? row : Math.min(rowMin, row);
+			rowMax = isNaN(rowMax) ? row : Math.max(rowMin, row);
+			colMin = isNaN(colMin) ? col : Math.min(colMin, col);
+			colMax = isNaN(colMax) ? col : Math.max(colMin, col);
+		}
+		return {
+			rowMin: rowMin,
+			rowMax: rowMax,
+			colMin: colMin,
+			colMax: colMax,
+		}
+	}
+
 	findFirstProperty(p: Tag | string) {
 		let props = this.getProperties(p);
 		if (props?.length > 0) {
