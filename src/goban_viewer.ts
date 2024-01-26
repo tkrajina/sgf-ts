@@ -151,6 +151,11 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 
 	autoPlayTimeout: any;
 
+	reset() {
+		this.positionViewer.setBgLabel("");
+		super.reset();
+	}
+
 	goTo(node?: SGFNode) {
 		super.goTo(node);
 		if ((node as SGFNodeWithMetadata)?.solution) {

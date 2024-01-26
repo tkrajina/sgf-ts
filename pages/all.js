@@ -1487,6 +1487,10 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         return _super.call(this, elementId, node, opts) || this;
     }
     ;
+    ProblemGobanViewer.prototype.reset = function () {
+        this.positionViewer.setBgLabel("");
+        _super.prototype.reset.call(this);
+    };
     ProblemGobanViewer.prototype.goTo = function (node) {
         _super.prototype.goTo.call(this, node);
         if (node === null || node === void 0 ? void 0 : node.solution) {
