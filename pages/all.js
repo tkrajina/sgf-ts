@@ -1329,19 +1329,26 @@ var coordinatesLetters = "abcdefghjklmnopqrst";
 var correctWords = ["correct", "točno", "+", "right"];
 function markPathsToSolution(node) {
     node.walk(function (path) {
-        var _a;
-        if (!(path === null || path === void 0 ? void 0 : path.length)) {
-            return;
-        }
+        var _a, _b, _c;
         var last = path[path.length - 1];
-        var com = last === null || last === void 0 ? void 0 : last.getProperty(Tag.Comment);
-        for (var _i = 0, correctWords_1 = correctWords; _i < correctWords_1.length; _i++) {
-            var word = correctWords_1[_i];
-            if (((_a = com === null || com === void 0 ? void 0 : com.trim()) === null || _a === void 0 ? void 0 : _a.toLowerCase().indexOf(word)) == 0) {
-                for (var _b = 0, path_1 = path; _b < path_1.length; _b++) {
-                    var e = path_1[_b];
-                    e.pathToSolution = true;
+        if (!((_a = last.children) === null || _a === void 0 ? void 0 : _a.length)) {
+            var isSolution = false;
+            var com = last === null || last === void 0 ? void 0 : last.getComment();
+            for (var _i = 0, correctWords_1 = correctWords; _i < correctWords_1.length; _i++) {
+                var word = correctWords_1[_i];
+                if (((_c = (_b = com === null || com === void 0 ? void 0 : com.trim()) === null || _b === void 0 ? void 0 : _b.toLowerCase()) === null || _c === void 0 ? void 0 : _c.indexOf(word)) == 0) {
+                    isSolution = true;
+                    for (var _d = 0, path_1 = path; _d < path_1.length; _d++) {
+                        var e = path_1[_d];
+                        e.pathToSolution = true;
+                    }
                 }
+            }
+            if (isSolution) {
+                last.solution = true;
+            }
+            else {
+                last.failure = true;
             }
         }
     });
@@ -1436,6 +1443,12 @@ var AbstractGobanViewer = /** @class */ (function () {
         (_a = this.goban).applyNodes.apply(_a, path);
         this.positionViewer.draw(this.goban);
         this.updateComment();
+        if (node === null || node === void 0 ? void 0 : node.solution) {
+            alert("Correct! :)");
+        }
+        else if (node === null || node === void 0 ? void 0 : node.failure) {
+            alert("Incorrect :(");
+        }
     };
     return AbstractGobanViewer;
 }());
@@ -1464,12 +1477,6 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
                     var _a;
                     _this.autoPlayTimeout = null;
                     if (!((_a = child.children) === null || _a === void 0 ? void 0 : _a.length)) {
-                        if (child === null || child === void 0 ? void 0 : child.pathToSolution) {
-                            alert("Correct! :)");
-                        }
-                        else {
-                            alert("Incorrect :(");
-                        }
                         return;
                     }
                     var first = (child.children || []).find((function (sub) {
@@ -1935,7 +1942,7 @@ var GobanPositionViewer = /** @class */ (function () {
             textAlign: "center",
             flexGrow: "1",
             justifyContent: "center",
-            fontSize: "".concat(props.bandWidth * 0.9).concat(props.unit)
+            fontSize: "".concat(props.bandWidth * 0.6).concat(props.unit)
         }).element;
         div.innerHTML = label;
         stoneDiv.appendChild(div);

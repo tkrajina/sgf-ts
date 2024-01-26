@@ -8,6 +8,8 @@ type StoneElement = HTMLElement & { row: number, col: number };
 
 type SGFNodeWithMetadata = SGFNode & {
 	pathToSolution?: boolean;
+	solution?: boolean;
+	failure?: boolean;
 	offPath?: boolean;
 };
 
@@ -15,16 +17,22 @@ const correctWords = ["correct", "točno", "+", "right"];
 
 function markPathsToSolution(node: SGFNode) {
 	node.walk((path: SGFNode[]) => {
-		if (!path?.length) {
-			return;
-		}
 		const last = path[path.length - 1];
-		const com = last?.getProperty(Tag.Comment)
-		for (const word of correctWords) {
-			if (com?.trim()?.toLowerCase().indexOf(word) == 0) {
-				for (const e of path) {
-					(e as SGFNodeWithMetadata).pathToSolution = true;
+		if (!last.children?.length) {
+			let isSolution = false;
+			const com = last?.getComment();
+			for (const word of correctWords) {
+				if (com?.trim()?.toLowerCase()?.indexOf(word) == 0) {
+					isSolution = true;
+					for (const e of path) {
+						(e as SGFNodeWithMetadata).pathToSolution = true;
+					}
 				}
+			}
+			if (isSolution) {
+				(last as SGFNodeWithMetadata).solution = true;
+			} else {
+				(last as SGFNodeWithMetadata).failure = true;
 			}
 		}
 	})
@@ -129,6 +137,11 @@ abstract class AbstractGobanViewer {
 		this.goban.applyNodes(...path);
 		this.positionViewer.draw(this.goban);
 		this.updateComment();
+		if ((node as SGFNodeWithMetadata)?.solution) {
+			alert("Correct! :)");
+		} else if ((node as SGFNodeWithMetadata)?.failure) {
+			alert("Incorrect :(");
+		}
 	}
 
 	abstract onClick(row: number, col: number, color: SGFColor);
@@ -158,11 +171,6 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 				this.autoPlayTimeout = setTimeout(() => {
 					this.autoPlayTimeout = null;
 					if (!child.children?.length) {
-						if ((child as SGFNodeWithMetadata)?.pathToSolution) {
-							alert("Correct! :)");
-						} else {
-							alert("Incorrect :(");
-						}
 						return;
 					}
 					const first = (child.children || []).find((sub => {
@@ -682,7 +690,7 @@ class GobanPositionViewer {
 			textAlign: "center",
 			flexGrow: "1",
 			justifyContent: "center",
-			fontSize: `${props.bandWidth * 0.9}${props.unit}`
+			fontSize: `${props.bandWidth * 0.6}${props.unit}`
 		}).element
 		div.innerHTML = label;
 		stoneDiv.appendChild(div);
