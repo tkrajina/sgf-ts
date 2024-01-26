@@ -1,6 +1,10 @@
 .PHONY: test
-test:
+test: compile
 	./node_modules/.bin/jest
+
+.PHONY: compile
+compile:
+	#./node_modules/.bin/tsc
 
 .PHONY: single-test
 single-test:

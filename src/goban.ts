@@ -1,45 +1,22 @@
 import { coordinateToRowColumn, expandCoordinatesRange, rowColumnToCoordinate, SGFColor, SGFCoordinate, SGFNode, SGFRowColumn, Tag } from "./sgf";
 
-export class SGFGoban {
-
-	latestMove: SGFCoordinate;
-	nextToPlay: SGFColor;
-
-	size: number;
+/** Just the goban stones and some basic utility methods. */
+export class GobanPosition {
 	goban: SGFColor[][] = [];
-	comment: string;
-	triangles: {[coord: SGFCoordinate]: boolean} = {};
-	squares: {[coord: SGFCoordinate]: boolean} = {};
-	crosses: {[coord: SGFCoordinate]: boolean} = {};
-	circles: {[coord: SGFCoordinate]: boolean} = {};
-	labels: {[coord: SGFCoordinate]: string} = {};
-
-	constructor(public sizeOrNode: number | SGFNode = 19) {
-		let size = 19;
-		let node: SGFNode | undefined;
-		if (sizeOrNode instanceof SGFNode) {
-			node = sizeOrNode as SGFNode;
-			size = parseInt((sizeOrNode as SGFNode).getProperty(Tag.Size)) || 19;
-		} else {
-			size = sizeOrNode as number;
-		}
+	constructor(public readonly size: number, goban?: SGFColor[][]) {
+		console.log("size=" + size)
 		this.size = size;
-		for (let row = 0; row < size; row++) {
-			const r: SGFColor[] = [];
-			for (let col = 0; col < size; col ++) {
-				r.push(SGFColor.NONE);
+		if (goban) {
+			this.goban = goban;
+		} else {
+			for (let row = 0; row < this.size; row++) {
+				const r: SGFColor[] = [];
+				for (let col = 0; col < this.size; col ++) {
+					r.push(SGFColor.NONE);
+				}
+				this.goban.push(r);
 			}
-			this.goban.push(r);
 		}
-		if (node) {
-			this.applyNodes(node);
-		}
-	}
-
-	clone() {
-		const res = new SGFGoban(this.size);
-		res.goban = JSON.parse(JSON.stringify(this.goban));
-		return res;
 	}
 
 	row(r: number) {
@@ -104,7 +81,125 @@ export class SGFGoban {
 		}
 	}
 
+	getGroupInfo(coord: SGFCoordinate): GroupInfo {
+		const res = new GroupInfo(this.stoneAt(coord));
+		this.fillGroupInfo(coord, res);
+		return res;
+	}
+
+	private fillGroupInfo(coord: SGFCoordinate, res: GroupInfo): GroupInfo {
+		if (res.groupColor === SGFColor.NONE || res.groupColor === SGFColor.INVALID) {
+			return res;
+		}
+
+		if (res.groupStones.indexOf(coord) < 0) {
+			res.groupStones.push(coord);
+		}
+
+		let [row, column] = coordinateToRowColumn(coord);
+		const neighborsCoords = [
+			rowColumnToCoordinate([row-1, column]), // UP
+			rowColumnToCoordinate([row+1, column]), // DOWN
+			rowColumnToCoordinate([row, column-1]), // LEFT
+			rowColumnToCoordinate([row, column+1]) // RIGHT
+		]
+		for (const neighborCoord of neighborsCoords) {
+			const neighborStone = this.stoneAt(neighborCoord);
+			if (neighborStone === SGFColor.INVALID) {
+				continue;
+			}
+			if (neighborStone === SGFColor.NONE) {
+				if (res.adjacentFreeSpaces.indexOf(neighborCoord) < 0) {
+					res.adjacentFreeSpaces.push(neighborCoord);
+				}
+			} else if (neighborStone === res.groupColor) {
+				// Same color => group:
+				if (res.groupStones.indexOf(neighborCoord) < 0) {
+					res.groupStones.push(neighborCoord);
+					this.fillGroupInfo(neighborCoord, res);
+					// TODO: recursion
+				}
+			} else if (neighborStone !== res.groupColor) {
+				if (res.adjacentStones.indexOf(neighborCoord) < 0) {
+					res.adjacentStones.push(neighborCoord);
+				}
+			} else {
+				//???
+			}
+		}
+
+		return res;
+	}
+
+	debugStr() {
+		return this.goban.map(row => row.join("")).join("\n");
+	}
+}
+
+export class SGFGoban extends GobanPosition {
+
+	latestMove: SGFCoordinate;
+	nextToPlay: SGFColor;
+
+	comment: string;
+	triangles: {[coord: SGFCoordinate]: boolean} = {};
+	squares: {[coord: SGFCoordinate]: boolean} = {};
+	crosses: {[coord: SGFCoordinate]: boolean} = {};
+	circles: {[coord: SGFCoordinate]: boolean} = {};
+	labels: {[coord: SGFCoordinate]: string} = {};
+
+	constructor(public sizeOrNode: number | SGFNode = 19) {
+		super("number" == typeof sizeOrNode ? sizeOrNode as number : parseInt((sizeOrNode as SGFNode).getProperty(Tag.Size)) || 19);
+		let node: SGFNode | undefined;
+		if (sizeOrNode instanceof SGFNode) {
+			node = sizeOrNode as SGFNode;
+			this.applyNodes(node);
+		}
+	}
+
+	clone() {
+		const res = new SGFGoban(this.size);
+		res.goban = JSON.parse(JSON.stringify(this.goban));
+		return res;
+	}
+
 	playStone(color: SGFColor, coords: SGFCoordinate): SGFCoordinate[] {
+		if (!coords) {
+			return; // pass
+		}
+
+		const newPosition = new GobanPosition(this.size, JSON.parse(JSON.stringify(this.goban)));
+		let removed: SGFCoordinate[] = [];
+		let [row, column] = coordinateToRowColumn(coords);
+		if (newPosition.coordinateValid(row, column)) {
+			newPosition.goban[row][column] = color;
+			const groupInfos = [
+				newPosition.getGroupInfo(rowColumnToCoordinate([row+1, column])),
+				newPosition.getGroupInfo(rowColumnToCoordinate([row-1, column])),
+				newPosition.getGroupInfo(rowColumnToCoordinate([row, column-1])),
+				newPosition.getGroupInfo(rowColumnToCoordinate([row, column+1])),
+			]
+			for (const gi of groupInfos) {
+				if (gi.groupColor !== SGFColor.INVALID && gi.groupColor !== SGFColor.NONE && gi.groupColor !== color && gi.adjacentFreeSpaces.length == 0) {
+					for (const stoneCoord of gi.groupStones) {
+						const color = newPosition.stoneAt(stoneCoord);
+						if (color === SGFColor.WHITE || color === SGFColor.BLACK) {
+							newPosition.addStones(SGFColor.NONE, stoneCoord);
+							removed.push(stoneCoord);
+						}
+					}
+				}
+			}
+		}
+
+		// TODO: Check self-atari
+		const playedStoneGroupInfo = newPosition.getGroupInfo(coords);
+		if (playedStoneGroupInfo.groupStones.length > 0 && playedStoneGroupInfo.adjacentFreeSpaces.length == 0) {
+			throw new Error("Suicide not allowed");
+		}
+
+		this.goban = newPosition.goban;
+
 		this.latestMove = coords;
 		if (color === SGFColor.WHITE) {
 			this.nextToPlay = SGFColor.BLACK;
@@ -112,33 +207,6 @@ export class SGFGoban {
 			this.nextToPlay = SGFColor.WHITE;
 		}
 
-		if (!coords) {
-			return; // pass
-		}
-
-		let removed: SGFCoordinate[] = [];
-		let [row, column] = coordinateToRowColumn(coords);
-		if (this.coordinateValid(row, column)) {
-			this.goban[row][column] = color;
-			const groupInfos = [
-				this.getGroupInfo(rowColumnToCoordinate([row+1, column])),
-				this.getGroupInfo(rowColumnToCoordinate([row-1, column])),
-				this.getGroupInfo(rowColumnToCoordinate([row, column-1])),
-				this.getGroupInfo(rowColumnToCoordinate([row, column+1])),
-			]
-			for (const gi of groupInfos) {
-				if (gi.groupColor !== SGFColor.INVALID && gi.groupColor !== SGFColor.NONE && gi.groupColor !== color && gi.adjacentFreeSpaces.length == 0) {
-					for (const stoneCoord of gi.groupStones) {
-						const color = this.stoneAt(stoneCoord);
-						if (color === SGFColor.WHITE || color === SGFColor.BLACK) {
-							this.addStones(SGFColor.NONE, stoneCoord);
-							removed.push(stoneCoord);
-						}
-					}
-				}
-			}
-		}
-		// TODO: Check self-atari
 		return removed;
 	}
 
@@ -201,59 +269,6 @@ export class SGFGoban {
 		}
 	}
 
-	getGroupInfo(coord: SGFCoordinate): GroupInfo {
-		const res = new GroupInfo(this.stoneAt(coord));
-		this.fillGroupInfo(coord, res);
-		return res;
-	}
-
-	private fillGroupInfo(coord: SGFCoordinate, res: GroupInfo): GroupInfo {
-		if (res.groupColor === SGFColor.NONE || res.groupColor === SGFColor.INVALID) {
-			return res;
-		}
-
-		if (res.groupStones.indexOf(coord) < 0) {
-			res.groupStones.push(coord);
-		}
-
-		let [row, column] = coordinateToRowColumn(coord);
-		const neighborsCoords = [
-			rowColumnToCoordinate([row-1, column]), // UP
-			rowColumnToCoordinate([row+1, column]), // DOWN
-			rowColumnToCoordinate([row, column-1]), // LEFT
-			rowColumnToCoordinate([row, column+1]) // RIGHT
-		]
-		for (const neighborCoord of neighborsCoords) {
-			const neighborStone = this.stoneAt(neighborCoord);
-			if (neighborStone === SGFColor.INVALID) {
-				continue;
-			}
-			if (neighborStone === SGFColor.NONE) {
-				if (res.adjacentFreeSpaces.indexOf(neighborCoord) < 0) {
-					res.adjacentFreeSpaces.push(neighborCoord);
-				}
-			} else if (neighborStone === res.groupColor) {
-				// Same color => group:
-				if (res.groupStones.indexOf(neighborCoord) < 0) {
-					res.groupStones.push(neighborCoord);
-					this.fillGroupInfo(neighborCoord, res);
-					// TODO: recursion
-				}
-			} else if (neighborStone !== res.groupColor) {
-				if (res.adjacentStones.indexOf(neighborCoord) < 0) {
-					res.adjacentStones.push(neighborCoord);
-				}
-			} else {
-				//???
-			}
-		}
-
-		return res;
-	}
-
-	debugStr() {
-		return this.goban.map(row => row.join("")).join("\n");
-	}
 }
 
 class GroupInfo {
