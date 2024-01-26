@@ -51,6 +51,6 @@
             const node = parseSGF(sgf);
             const crop = (params.get("crop") || "").split(",").map(s => parseInt(s) || 0);
         </script>
-        <script>goban1 = new ProblemGobanViewer("goban1", node, {crop: "auto", coordinates: true, mode: "PROBLEM"})</script>
+        <script>goban1 = new ProblemGobanViewer("goban1", node, {crop: "square", coordinates: true, mode: "PROBLEM"})</script>
     </body>
 </html>

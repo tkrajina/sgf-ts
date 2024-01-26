@@ -96,6 +96,39 @@ var Bounds = /** @class */ (function () {
         this.colMax = isNaN(this.colMax) ? col : Math.max(this.colMax, col);
         console.log("apply ".concat(row, ", ").concat(col, " => ").concat(JSON.stringify(this)));
     };
+    Bounds.prototype.makeSquare = function (size) {
+        var w = 0;
+        var h = 1;
+        var n = 0;
+        while (w !== h) {
+            if (n > 50) {
+                return;
+            }
+            w = this.colMax - this.colMin;
+            h = this.rowMax - this.rowMin;
+            if (w > h) {
+                n++;
+                if (n % 2 == 0) {
+                    this.rowMin = Math.max(0, this.rowMin - 1);
+                }
+                else {
+                    this.rowMax = Math.min(size, this.rowMax + 1);
+                }
+            }
+            else if (w < h) {
+                n++;
+                if (n % 2 == 0) {
+                    this.colMin = Math.max(0, this.colMin - 1);
+                }
+                else {
+                    this.colMax = Math.min(size, this.colMax + 1);
+                }
+            }
+            else {
+                return;
+            }
+        }
+    };
     return Bounds;
 }());
 exports.Bounds = Bounds;
@@ -1567,8 +1600,11 @@ var GobanPositionViewer = /** @class */ (function () {
         this.unit = (opts === null || opts === void 0 ? void 0 : opts.unit) || "vmin";
         this.rootElement = document.getElementById(this.elementId);
         if (opts === null || opts === void 0 ? void 0 : opts.crop) {
-            if (opts.crop == "auto") {
+            if (opts.crop == "auto" || opts.crop == "square") {
                 var bounds = node.bounds();
+                if (opts.crop == "square") {
+                    bounds.makeSquare(this.size);
+                }
                 var top_1 = bounds.rowMin;
                 var right = this.size - bounds.colMax;
                 var bottom = this.size - bounds.rowMax;

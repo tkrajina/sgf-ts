@@ -52,6 +52,36 @@ export class Bounds {
 		this.colMax = isNaN(this.colMax) ? col : Math.max(this.colMax, col);
 		console.log(`apply ${row}, ${col} => ${JSON.stringify(this)}`);
 	}
+
+	makeSquare(size: number) {
+		let w = 0;
+		let h = 1;
+		let n = 0;
+		while (w !== h) {
+			if (n > 50) {
+				return;
+			}
+			w = this.colMax - this.colMin;
+			h = this.rowMax - this.rowMin;
+			if (w > h) {
+				n++;
+				if (n % 2 == 0) {
+					this.rowMin = Math.max(0, this.rowMin - 1);
+				} else {
+					this.rowMax = Math.min(size, this.rowMax + 1);
+				}
+			} else if (w < h) {
+				n++;
+				if (n % 2 == 0) {
+					this.colMin = Math.max(0, this.colMin - 1);
+				} else {
+					this.colMax = Math.min(size, this.colMax + 1);
+				}
+			} else {
+				return;
+			}
+		}
+	}
 }
 
 export function expandCoordinatesRange(_coords: string | SGFCoordinate | string[]) {

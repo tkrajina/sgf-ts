@@ -239,7 +239,7 @@ interface GobanViewerOpts {
 	mode?: GobanViewerMode,
 	side?: number,
 	unit?: string,
-	crop: "auto" | [number, number, number, number],
+	crop: "auto" | "square" | [number, number, number, number],
 	cropLeft: number
 	onClick?: (row: number, col: number, coloe: SGFColor) => void;
 	coordinates?: boolean;
@@ -288,8 +288,11 @@ class GobanPositionViewer {
 		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);
 		if (opts?.crop) {
-			if (opts.crop == "auto") {
+			if (opts.crop == "auto" || opts.crop == "square") {
 				const bounds = node.bounds();
+				if (opts.crop == "square") {
+					bounds.makeSquare(this.size);
+				}
 				let top = bounds.rowMin;
 				let right = this.size - bounds.colMax;
 				let bottom = this.size - bounds.rowMax;
