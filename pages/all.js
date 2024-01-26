@@ -91,9 +91,9 @@ var Bounds = /** @class */ (function () {
     }
     Bounds.prototype.apply = function (row, col) {
         this.rowMin = isNaN(this.rowMin) ? row : Math.min(this.rowMin, row);
-        this.rowMax = isNaN(this.rowMax) ? row : Math.max(this.rowMin, row);
+        this.rowMax = isNaN(this.rowMax) ? row : Math.max(this.rowMax, row);
         this.colMin = isNaN(this.colMin) ? col : Math.min(this.colMin, col);
-        this.colMax = isNaN(this.colMax) ? col : Math.max(this.colMin, col);
+        this.colMax = isNaN(this.colMax) ? col : Math.max(this.colMax, col);
     };
     return Bounds;
 }());
