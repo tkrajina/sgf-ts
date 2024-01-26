@@ -94,6 +94,7 @@ var Bounds = /** @class */ (function () {
         this.rowMax = isNaN(this.rowMax) ? row : Math.max(this.rowMax, row);
         this.colMin = isNaN(this.colMin) ? col : Math.min(this.colMin, col);
         this.colMax = isNaN(this.colMax) ? col : Math.max(this.colMax, col);
+        console.log("apply ".concat(row, ", ").concat(col, " => ").concat(JSON.stringify(this)));
     };
     return Bounds;
 }());
@@ -1457,9 +1458,11 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         _super.prototype.goTo.call(this, node);
         if (node === null || node === void 0 ? void 0 : node.solution) {
             this.positionViewer.setBgLabel("✓", "green");
+            alert("That's correct!");
         }
         else if ((node === null || node === void 0 ? void 0 : node.failure) || (node === null || node === void 0 ? void 0 : node.offPath)) {
             this.positionViewer.setBgLabel(":(", "red");
+            alert("Nope :(");
         }
     };
     ProblemGobanViewer.prototype.onClick = function (row, col, color) {

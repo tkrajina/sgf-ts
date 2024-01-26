@@ -155,8 +155,10 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		super.goTo(node);
 		if ((node as SGFNodeWithMetadata)?.solution) {
 			this.positionViewer.setBgLabel("✓", "green");
+			alert("That's correct!");
 		} else if ((node as SGFNodeWithMetadata)?.failure || (node as SGFNodeWithMetadata)?.offPath) {
 			this.positionViewer.setBgLabel(":(", "red");
+			alert("Nope :(");
 		}
 	}
 
