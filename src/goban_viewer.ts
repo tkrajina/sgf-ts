@@ -283,7 +283,7 @@ class GobanPositionViewer {
 
 	constructor(private elementId: string, node: SGFNode, opts?: GobanViewerOpts) {
 		this.idPrefix = elementId;
-		this.width = opts?.side || 50;
+		this.width = opts?.side || 80;
 		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);

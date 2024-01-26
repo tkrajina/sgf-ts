@@ -1562,7 +1562,7 @@ var GobanPositionViewer = /** @class */ (function () {
         this.temporaryElements = [];
         this.coordinates = false;
         this.idPrefix = elementId;
-        this.width = (opts === null || opts === void 0 ? void 0 : opts.side) || 50;
+        this.width = (opts === null || opts === void 0 ? void 0 : opts.side) || 80;
         this.originalWidth = this.width;
         this.unit = (opts === null || opts === void 0 ? void 0 : opts.unit) || "vmin";
         this.rootElement = document.getElementById(this.elementId);
