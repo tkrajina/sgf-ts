@@ -2,6 +2,15 @@
 test:
 	./node_modules/.bin/jest
 
+.PHONY: single-test
+single-test:
+	if [ -z "$(TEST)" ]; \
+	then \
+		echo "no APP specified => $(TEST)"; \
+		exit 1; \
+	fi
+	./node_modules/.bin/jest -t '$(TEST)'
+
 .PHONY: clean
 clean:
 	-rm all.*
