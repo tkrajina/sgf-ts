@@ -131,17 +131,13 @@ abstract class AbstractGobanViewer {
 		if (!node) {
 			return;
 		}
+		this.positionViewer.setBgLabel("");
 		this.currentNode = node;
 		const path = this.rootNode.findPath(node);
 		this.goban = new SGFGoban();
 		this.goban.applyNodes(...path);
 		this.positionViewer.draw(this.goban);
 		this.updateComment();
-		if ((node as SGFNodeWithMetadata)?.solution) {
-			alert("Correct! :)");
-		} else if ((node as SGFNodeWithMetadata)?.failure) {
-			alert("Incorrect :(");
-		}
 	}
 
 	abstract onClick(row: number, col: number, color: SGFColor);
@@ -154,6 +150,15 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 	};
 
 	autoPlayTimeout: any;
+
+	goTo(node?: SGFNode) {
+		super.goTo(node);
+		if ((node as SGFNodeWithMetadata)?.solution) {
+			this.positionViewer.setBgLabel("✓", "green");
+		} else if ((node as SGFNodeWithMetadata)?.failure || (node as SGFNodeWithMetadata)?.offPath) {
+			this.positionViewer.setBgLabel(":(", "red");
+		}
+	}
 
 	onClick(row: number, col: number, color: SGFColor) {
 		if (this.autoPlayTimeout) {
@@ -256,6 +261,7 @@ class GobanPositionViewer {
 
 	rootElement: HTMLElement;
 	gobanDiv: HTMLElement;
+	bgLabelDiv: HTMLElement;
 	tmpHoverStone: HTMLElement;
 
 	cropTop = 0;
@@ -345,13 +351,27 @@ class GobanPositionViewer {
 		);
 		this.bandWidth = this.width / this.size;
 
+		const w = (this.coordinates ? 2 * this.bandWidth : 0) + this.gobanWidth();
+		const h = (this.coordinates ? 2 * this.bandWidth : 0) + this.gobanHeight();
 		const withCoordinatesDiv = getOrCreateElement(this.idPrefix, "div", "goban-coordinates", {
 			overflow: "hidden",
 			backgroundColor: "#ebb063",
 			position: "relative",
-			width: `${(this.coordinates ? 2 * this.bandWidth : 0) + this.gobanWidth()}${this.unit}`,
-			height: `${(this.coordinates ? 2 * this.bandWidth : 0) + this.gobanHeight()}${this.unit}`,
+			width: `${w}${this.unit}`,
+			height: `${h}${this.unit}`,
+			display: "flex",
+			alignItems: "center",
+			justifyItems: "center",
+			textAlign: "center",
+			alignContent: "center",
+			justifyContent: "center",
+			fontSize: `${Math.min(w, h) * .75}${this.unit}`
 		}).element;
+		this.bgLabelDiv = getOrCreateElement(this.elementId, "div", "bgtext", {
+			alignSelf: "center",
+			justifySelf: "center"
+		}).element;
+		withCoordinatesDiv.appendChild(this.bgLabelDiv);
 
 		// Used to crop the overflow:
 		const cropContainerDiv = getOrCreateElement(this.idPrefix, "div", "goban-container", {
@@ -367,7 +387,6 @@ class GobanPositionViewer {
 		this.gobanDiv = getOrCreateElement(this.idPrefix, "div", "goban_div", {
 			width: `${this.width}${this.unit}`,
 			height: `${this.width}${this.unit}`,
-			backgroundColor: "#ebb063",
 			position: "relative",
 			top: `${(- this.cropTop) * this.width}${this.unit}`,
 			left: `${(- this.cropLeft) * this.width}${this.unit}`,
@@ -406,6 +425,11 @@ class GobanPositionViewer {
 		if (this.coordinates) {
 			this.drawCoordinates(withCoordinatesDiv);
 		}
+	}
+
+	setBgLabel(str: string, color: string = "black") {
+		applyStyle(this.bgLabelDiv, {color: color});
+		this.bgLabelDiv.innerHTML = str;
 	}
 
 	drawCoordinates(withCoordinatesDiv: HTMLElement) {

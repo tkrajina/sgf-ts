@@ -1437,18 +1437,13 @@ var AbstractGobanViewer = /** @class */ (function () {
         if (!node) {
             return;
         }
+        this.positionViewer.setBgLabel("");
         this.currentNode = node;
         var path = this.rootNode.findPath(node);
         this.goban = new SGFGoban();
         (_a = this.goban).applyNodes.apply(_a, path);
         this.positionViewer.draw(this.goban);
         this.updateComment();
-        if (node === null || node === void 0 ? void 0 : node.solution) {
-            alert("Correct! :)");
-        }
-        else if (node === null || node === void 0 ? void 0 : node.failure) {
-            alert("Incorrect :(");
-        }
     };
     return AbstractGobanViewer;
 }());
@@ -1458,6 +1453,15 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         return _super.call(this, elementId, node, opts) || this;
     }
     ;
+    ProblemGobanViewer.prototype.goTo = function (node) {
+        _super.prototype.goTo.call(this, node);
+        if (node === null || node === void 0 ? void 0 : node.solution) {
+            this.positionViewer.setBgLabel("✓", "green");
+        }
+        else if ((node === null || node === void 0 ? void 0 : node.failure) || (node === null || node === void 0 ? void 0 : node.offPath)) {
+            this.positionViewer.setBgLabel(":(", "red");
+        }
+    };
     ProblemGobanViewer.prototype.onClick = function (row, col, color) {
         var _this = this;
         var _a;
@@ -1617,13 +1621,27 @@ var GobanPositionViewer = /** @class */ (function () {
     GobanPositionViewer.prototype.drawGoban = function () {
         this.width = Math.min(this.originalWidth / (1 - this.cropLeft - this.cropRight), this.originalWidth / (1 - this.cropTop - this.cropBottom));
         this.bandWidth = this.width / this.size;
+        var w = (this.coordinates ? 2 * this.bandWidth : 0) + this.gobanWidth();
+        var h = (this.coordinates ? 2 * this.bandWidth : 0) + this.gobanHeight();
         var withCoordinatesDiv = getOrCreateElement(this.idPrefix, "div", "goban-coordinates", {
             overflow: "hidden",
             backgroundColor: "#ebb063",
             position: "relative",
-            width: "".concat((this.coordinates ? 2 * this.bandWidth : 0) + this.gobanWidth()).concat(this.unit),
-            height: "".concat((this.coordinates ? 2 * this.bandWidth : 0) + this.gobanHeight()).concat(this.unit),
+            width: "".concat(w).concat(this.unit),
+            height: "".concat(h).concat(this.unit),
+            display: "flex",
+            alignItems: "center",
+            justifyItems: "center",
+            textAlign: "center",
+            alignContent: "center",
+            justifyContent: "center",
+            fontSize: "".concat(Math.min(w, h) * .75).concat(this.unit)
         }).element;
+        this.bgLabelDiv = getOrCreateElement(this.elementId, "div", "bgtext", {
+            alignSelf: "center",
+            justifySelf: "center"
+        }).element;
+        withCoordinatesDiv.appendChild(this.bgLabelDiv);
         // Used to crop the overflow:
         var cropContainerDiv = getOrCreateElement(this.idPrefix, "div", "goban-container", {
             position: "absolute",
@@ -1637,7 +1655,6 @@ var GobanPositionViewer = /** @class */ (function () {
         this.gobanDiv = getOrCreateElement(this.idPrefix, "div", "goban_div", {
             width: "".concat(this.width).concat(this.unit),
             height: "".concat(this.width).concat(this.unit),
-            backgroundColor: "#ebb063",
             position: "relative",
             top: "".concat((-this.cropTop) * this.width).concat(this.unit),
             left: "".concat((-this.cropLeft) * this.width).concat(this.unit),
@@ -1676,6 +1693,11 @@ var GobanPositionViewer = /** @class */ (function () {
         if (this.coordinates) {
             this.drawCoordinates(withCoordinatesDiv);
         }
+    };
+    GobanPositionViewer.prototype.setBgLabel = function (str, color) {
+        if (color === void 0) { color = "black"; }
+        applyStyle(this.bgLabelDiv, { color: color });
+        this.bgLabelDiv.innerHTML = str;
     };
     GobanPositionViewer.prototype.drawCoordinates = function (withCoordinatesDiv) {
         if (!this.coordinates) {
