@@ -1525,10 +1525,12 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         _super.prototype.goTo.call(this, node);
         if (node === null || node === void 0 ? void 0 : node.solution) {
             this.positionViewer.setBgLabel("✓", "green");
-            alert("That's correct!");
         }
-        else if ((node === null || node === void 0 ? void 0 : node.failure) || (node === null || node === void 0 ? void 0 : node.offPath)) {
+        else if (node === null || node === void 0 ? void 0 : node.failure) {
             this.positionViewer.setBgLabel("✗", "red");
+        }
+        else if (node === null || node === void 0 ? void 0 : node.offPath) {
+            this.positionViewer.setBgLabel("?", "gray", { opacity: 0.25 });
         }
         this.markSolutions();
     };
@@ -1538,14 +1540,12 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
             for (var _i = 0, _a = (node === null || node === void 0 ? void 0 : node.children) || []; _i < _a.length; _i++) {
                 var subnode = _a[_i];
                 var _b = subnode.playerAndCoordinates(), color = _b[0], coords = _b[1];
-                if (color == this.autoPlayColor) {
-                    var _c = coordinateToRowColumn(coords), row = _c[0], col = _c[1];
-                    if ((subnode === null || subnode === void 0 ? void 0 : subnode.pathToSolution) || (subnode === null || subnode === void 0 ? void 0 : subnode.solution)) {
-                        this.positionViewer.drawLabel(row, col, "✓", { color: "green" });
-                    }
-                    else {
-                        this.positionViewer.drawLabel(row, col, "✗", { color: "red" });
-                    }
+                var _c = coordinateToRowColumn(coords), row = _c[0], col = _c[1];
+                if ((subnode === null || subnode === void 0 ? void 0 : subnode.pathToSolution) || (subnode === null || subnode === void 0 ? void 0 : subnode.solution)) {
+                    this.positionViewer.drawLabel(row, col, "✓", { color: "green" });
+                }
+                else {
+                    this.positionViewer.drawLabel(row, col, "✗", { color: "red" });
                 }
             }
         }
@@ -1778,9 +1778,9 @@ var GobanPositionViewer = /** @class */ (function () {
             this.drawCoordinates(withCoordinatesDiv);
         }
     };
-    GobanPositionViewer.prototype.setBgLabel = function (str, color) {
+    GobanPositionViewer.prototype.setBgLabel = function (str, color, opts) {
         if (color === void 0) { color = "black"; }
-        applyStyle(this.bgLabelDiv, { color: color });
+        applyStyle(this.bgLabelDiv, { color: color, opacity: (opts === null || opts === void 0 ? void 0 : opts.opacity) === undefined ? "1" : "" + opts.opacity });
         this.bgLabelDiv.innerHTML = str;
     };
     GobanPositionViewer.prototype.drawCoordinates = function (withCoordinatesDiv) {

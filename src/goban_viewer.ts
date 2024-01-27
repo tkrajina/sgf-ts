@@ -52,7 +52,7 @@ function getOrCreateElement(prefix: string, name: string, id: string, style?: Pa
 	let created = false;
 	if (!el) {
 		created = true;
-		el =document.createElement(name);
+		el = document.createElement(name);
 	}
 	if (id) {
 		el.id = id;
@@ -61,7 +61,7 @@ function getOrCreateElement(prefix: string, name: string, id: string, style?: Pa
 	if (innerHTML) {
 		el.innerHTML = innerHTML;
 	}
-	return {element: el, created: created};
+	return { element: el, created: created };
 }
 
 function createElement(prefix: string, name: string, id: string, style?: Partial<CSSStyleDeclaration>) {
@@ -171,9 +171,10 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		super.goTo(node);
 		if ((node as SGFNodeWithMetadata)?.solution) {
 			this.positionViewer.setBgLabel("✓", "green");
-			alert("That's correct!");
-		} else if ((node as SGFNodeWithMetadata)?.failure || (node as SGFNodeWithMetadata)?.offPath) {
+		} else if ((node as SGFNodeWithMetadata)?.failure) {
 			this.positionViewer.setBgLabel("✗", "red");
+		} else if ((node as SGFNodeWithMetadata)?.offPath) {
+			this.positionViewer.setBgLabel("?", "gray", {opacity: 0.25});
 		}
 		this.markSolutions();
 	}
@@ -181,15 +182,13 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 	markSolutions() {
 		const node = this.currentNode;
 		if (this.showSolution) {
-			for (const subnode of node?.children||[]) {
+			for (const subnode of node?.children || []) {
 				let [color, coords] = subnode.playerAndCoordinates();
-				if (color == this.autoPlayColor) {
-					let [row, col] = coordinateToRowColumn(coords);
-					if ((subnode as SGFNodeWithMetadata)?.pathToSolution || (subnode as SGFNodeWithMetadata)?.solution) {
-						this.positionViewer.drawLabel(row, col, "✓", {color: "green"});
-					} else {
-						this.positionViewer.drawLabel(row, col, "✗", {color: "red"});
-					}
+				let [row, col] = coordinateToRowColumn(coords);
+				if ((subnode as SGFNodeWithMetadata)?.pathToSolution || (subnode as SGFNodeWithMetadata)?.solution) {
+					this.positionViewer.drawLabel(row, col, "✓", { color: "green" });
+				} else {
+					this.positionViewer.drawLabel(row, col, "✗", { color: "red" });
 				}
 			}
 		}
@@ -200,7 +199,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 			return;
 		}
 		const coord = rowColumnToCoordinate([row, col]);
-		for (const i in this.currentNode?.children||[]) {
+		for (const i in this.currentNode?.children || []) {
 			const child = this.currentNode.children[i];
 			let [_, childCoord] = child.playerAndCoordinates();
 			if (coord == childCoord) {
@@ -450,7 +449,7 @@ class GobanPositionViewer {
 				top: `${this.width * index / this.size + this.bandWidth / 2.}${this.unit}`,
 				backgroundColor: "black"
 			}).element)
-				// <div style={{}} />
+			// <div style={{}} />
 		}
 		this.drawHoshi();
 		if (this.coordinates) {
@@ -458,8 +457,8 @@ class GobanPositionViewer {
 		}
 	}
 
-	setBgLabel(str: string, color: string = "black") {
-		applyStyle(this.bgLabelDiv, {color: color});
+	setBgLabel(str: string, color: string = "black", opts?: {opacity?: number}) {
+		applyStyle(this.bgLabelDiv, { color: color, opacity: opts?.opacity === undefined ? "1" : "" + opts.opacity });
 		this.bgLabelDiv.innerHTML = str;
 	}
 
@@ -513,35 +512,35 @@ class GobanPositionViewer {
 	}
 
 	drawHoshi() {
-		let hoshiPositions: [number, number][]  = [];
+		let hoshiPositions: [number, number][] = [];
 		switch (this.size) {
 			case 19:
-				hoshiPositions  = [
+				hoshiPositions = [
 					[3, 3], [3, 9], [3, 15],
 					[9, 3], [9, 9], [9, 15],
 					[15, 3], [15, 9], [15, 15],
 				];
 				break;
 			case 13:
-				hoshiPositions  = [
+				hoshiPositions = [
 					[3, 3], [3, 9],
 					[6, 6],
 					[9, 3], [9, 9],
 				];
 				break;
 			case 9:
-				hoshiPositions  = [
+				hoshiPositions = [
 					[2, 2], [2, 6],
 					[6, 2], [6, 6],
 				];
 				break;
 		}
 		for (const pos of hoshiPositions) {
-			this.drawIntersectionDot("hoshi", pos[0], pos[1], {opacity: 1, radious: this.bandWidth / 5, color: "black"})
+			this.drawIntersectionDot("hoshi", pos[0], pos[1], { opacity: 1, radious: this.bandWidth / 5, color: "black" })
 		}
 	}
 
-	drawIntersectionDot(idPrefix: string, row: number, col: number, params: {opacity?: any, color: string, radious: number}) {
+	drawIntersectionDot(idPrefix: string, row: number, col: number, params: { opacity?: any, color: string, radious: number }) {
 		const div = getOrCreateElement(this.idPrefix, "div", `${idPrefix}-intersection-${row}-${col}`, {
 			justifyContent: "center",
 			alignContent: "center",
@@ -566,10 +565,10 @@ class GobanPositionViewer {
 		this.gobanDiv.appendChild(div);
 		this.gobanDiv.onmouseleave = this.onMouseLeaveGoban.bind(this);
 		this.gobanDiv.onmouseup = e => {
-				if (this.mouseOverRow !== undefined && this.mouseOverCol !== undefined) {
-					this?.onClick?.(this.mouseOverRow, this.mouseOverCol, this.goban.nextToPlay);
-				}
-			};
+			if (this.mouseOverRow !== undefined && this.mouseOverCol !== undefined) {
+				this?.onClick?.(this.mouseOverRow, this.mouseOverCol, this.goban.nextToPlay);
+			}
+		};
 		return div;
 	}
 
@@ -674,7 +673,7 @@ class GobanPositionViewer {
 			(stoneElement.element as StoneElement).col = col;
 			stoneElement.element.onmouseenter = e => {
 				const se = e.currentTarget as StoneElement;
-				 if (se?.row !== undefined && se?.col !== undefined) {
+				if (se?.row !== undefined && se?.col !== undefined) {
 					this.onMouseEnter(row, col)
 				}
 			};
@@ -733,7 +732,7 @@ class GobanPositionViewer {
 		})
 	}
 
-	drawLabel(row: number, column: number, label: string, props: {color: string}) {
+	drawLabel(row: number, column: number, label: string, props: { color: string }) {
 		this.drawStone(row, column);
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneDiv = this.getStoneElement(row, column);

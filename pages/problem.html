@@ -15,10 +15,15 @@
         &middot;
         <a href="javascript:void(goban1.reset())">Reset</a>
         &middot;
-        <a href="javascript:void(goban1.toggleShowSolution())">Show/hide solution</a>
+        <a class="toggle_solution" href="javascript:void(goban1.toggleShowSolution())">Show/hide solution</a>
         <strong><p id="goban1_comment"></p></strong>
 
         <script>
+            document.getElementsByClassName("toggle_solution")[0].style.visibility = "hidden";
+            setTimeout(() => {
+                document.getElementsByClassName("toggle_solution")[0].style.visibility = "visible";
+            }, 5 * 1000)
+
             document.addEventListener('keydown', async (event) => {
                 console.log(event.metaKey, "...", event.code)
                 if (event.metaKey && event.code == "KeyV") {
@@ -46,7 +51,7 @@
             });
             const params = new URLSearchParams(window.location.search);
             let sgf = params.get("sgf");
-                                sgf = `(;GM[1]FF[4]SZ[19]AP[Sabaki:0.52.2]AB[ro:rq][pp:qp][oq:os]AW[qn:qo][rn][po][np:op][pq:ps][qq][rr]PL[B]VW[ll:ss]FG[4353:Black to play]CA[UTF-8]C[Crni igra.](;B[rs]C[Bravo!];W[sr];B[qr]C[CORRECT];W[qs];B[qr]C[Correct])(;B[qs]C[Krivo jer...];W[qr];B[sr];W[rs](;B[sq];W[so];B[ss];W[sp])(;B[ss];W[sq])))`;
+            //sgf = `(;GM[1]FF[4]SZ[19]AP[Sabaki:0.52.2]AB[ro:rq][pp:qp][oq:os]AW[qn:qo][rn][po][np:op][pq:ps][qq][rr]PL[B]VW[ll:ss]FG[4353:Black to play]CA[UTF-8]C[Crni igra.](;B[rs]C[Bravo!];W[sr];B[qr]C[CORRECT];W[qs];B[qr]C[Correct])(;B[qs]C[Krivo jer...];W[qr];B[sr];W[rs](;B[sq];W[so];B[ss];W[sp])(;B[ss];W[sq])))`;
             if (!sgf) {
                 alert("Missing sgf parameter");
                 sgf = "(;)";
