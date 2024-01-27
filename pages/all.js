@@ -1498,7 +1498,7 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
             alert("That's correct!");
         }
         else if ((node === null || node === void 0 ? void 0 : node.failure) || (node === null || node === void 0 ? void 0 : node.offPath)) {
-            this.positionViewer.setBgLabel(":(", "red");
+            this.positionViewer.setBgLabel("✗", "red");
             alert("Nope :(");
         }
     };
