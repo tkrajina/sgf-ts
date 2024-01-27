@@ -1444,7 +1444,6 @@ var GobanViewerMode;
 var AbstractGobanViewer = /** @class */ (function () {
     function AbstractGobanViewer(elementId, node, opts) {
         var _this = this;
-        this.autoPlayColor = undefined;
         this.elementId = elementId;
         var rootElement = document.getElementById(this.elementId);
         if (!rootElement) {
@@ -1502,7 +1501,11 @@ var AbstractGobanViewer = /** @class */ (function () {
 var ProblemGobanViewer = /** @class */ (function (_super) {
     __extends(ProblemGobanViewer, _super);
     function ProblemGobanViewer(elementId, node, opts) {
-        return _super.call(this, elementId, node, opts) || this;
+        var _this = _super.call(this, elementId, node, opts) || this;
+        _this.showSolution = false;
+        _this.autoPlayColor = undefined;
+        _this.markSolutions();
+        return _this;
     }
     ;
     ProblemGobanViewer.prototype.reset = function () {
@@ -1517,6 +1520,23 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         }
         else if ((node === null || node === void 0 ? void 0 : node.failure) || (node === null || node === void 0 ? void 0 : node.offPath)) {
             this.positionViewer.setBgLabel("✗", "red");
+        }
+        this.markSolutions();
+    };
+    ProblemGobanViewer.prototype.markSolutions = function () {
+        var node = this.currentNode;
+        if (this.showSolution) {
+            for (var _i = 0, _a = (node === null || node === void 0 ? void 0 : node.children) || []; _i < _a.length; _i++) {
+                var subnode = _a[_i];
+                var _b = subnode.playerAndCoordinates(), _ = _b[0], coords = _b[1];
+                var _c = coordinateToRowColumn(coords), row = _c[0], col = _c[1];
+                if ((subnode === null || subnode === void 0 ? void 0 : subnode.pathToSolution) || (subnode === null || subnode === void 0 ? void 0 : subnode.solution)) {
+                    this.positionViewer.drawLabel(row, col, "✓", { color: "green" });
+                }
+                else {
+                    this.positionViewer.drawLabel(row, col, "✗", { color: "red" });
+                }
+            }
         }
     };
     ProblemGobanViewer.prototype.onClick = function (row, col, color) {
@@ -1534,22 +1554,24 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
                     console.log("yes");
                 }
                 this_1.goTo(child);
-                this_1.autoPlayTimeout = setTimeout(function () {
-                    var _a;
-                    _this.autoPlayTimeout = null;
-                    if (!((_a = child.children) === null || _a === void 0 ? void 0 : _a.length)) {
-                        return;
-                    }
-                    var first = (child.children || []).find((function (sub) {
-                        if (sub.pathToSolution) {
-                            return true;
+                if (!this_1.showSolution) {
+                    this_1.autoPlayTimeout = setTimeout(function () {
+                        var _a;
+                        _this.autoPlayTimeout = null;
+                        if (!((_a = child.children) === null || _a === void 0 ? void 0 : _a.length)) {
+                            return;
                         }
-                    }));
-                    if (first) {
-                        _this.goTo(first);
-                    }
-                    _this.goTo(child.children[0]);
-                }, 2 * 250);
+                        var first = (child.children || []).find((function (sub) {
+                            if (sub.pathToSolution) {
+                                return true;
+                            }
+                        }));
+                        if (first) {
+                            _this.goTo(first);
+                        }
+                        _this.goTo(child.children[0]);
+                    }, 2 * 250);
+                }
                 return { value: void 0 };
             }
         };
@@ -1577,7 +1599,6 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         if (this.autoPlayTimeout) {
             return;
         }
-        // TODO: Autoclick colors
         var node = (_a = this.currentNode.children) === null || _a === void 0 ? void 0 : _a[0];
         if (!node) {
             return;
@@ -1585,19 +1606,15 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         this.goTo(node);
     };
     ProblemGobanViewer.prototype.previous = function () {
-        var _a;
         if (this.autoPlayTimeout) {
             return;
         }
         var path = this.rootNode.findPath(this.currentNode);
-        if (((path === null || path === void 0 ? void 0 : path.length) || 0) < 2) {
+        if (((path === null || path === void 0 ? void 0 : path.length) || 0) <= 1) {
             return;
         }
         path.pop();
-        this.currentNode = path[path.length - 1];
-        this.goban = new SGFGoban();
-        (_a = this.goban).applyNodes.apply(_a, path);
-        this.positionViewer.draw(this.goban);
+        this.goTo(path[path.length - 1]);
     };
     return ProblemGobanViewer;
 }(AbstractGobanViewer));
@@ -1880,27 +1897,27 @@ var GobanPositionViewer = /** @class */ (function () {
         for (var coord in this.goban.labels) {
             var _c = coordinateToRowColumn(coord), row = _c[0], col = _c[1];
             var color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-            this.drawLabel(row, col, this.goban.labels[coord], { bandWidth: this.bandWidth, unit: this.unit, color: color });
+            this.drawLabel(row, col, this.goban.labels[coord], { color: color });
         }
         for (var coord in this.goban.triangles) {
             var _d = coordinateToRowColumn(coord), row = _d[0], col = _d[1];
             var color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-            this.drawLabel(row, col, "△", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+            this.drawLabel(row, col, "△", { color: color });
         }
         for (var coord in this.goban.squares) {
             var _e = coordinateToRowColumn(coord), row = _e[0], col = _e[1];
             var color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-            this.drawLabel(row, col, "□", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+            this.drawLabel(row, col, "□", { color: color });
         }
         for (var coord in this.goban.crosses) {
             var _f = coordinateToRowColumn(coord), row = _f[0], col = _f[1];
             var color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-            this.drawLabel(row, col, "×", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+            this.drawLabel(row, col, "×", { color: color });
         }
         for (var coord in this.goban.circles) {
             var _g = coordinateToRowColumn(coord), row = _g[0], col = _g[1];
             var color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-            this.drawLabel(row, col, "○", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+            this.drawLabel(row, col, "○", { color: color });
         }
         /*
     return <div style={{}}>
@@ -2020,7 +2037,7 @@ var GobanPositionViewer = /** @class */ (function () {
             textAlign: "center",
             flexGrow: "1",
             justifyContent: "center",
-            fontSize: "".concat(props.bandWidth * 0.6).concat(props.unit)
+            fontSize: "".concat(this.bandWidth * 0.6).concat(this.unit)
         }).element;
         div.innerHTML = label;
         stoneDiv.appendChild(div);

@@ -84,7 +84,6 @@ abstract class AbstractGobanViewer {
 	protected rootNode: SGFNode;
 	protected currentNode: SGFNode;
 	protected goban: SGFGoban;
-	autoPlayColor: SGFColor | undefined = undefined;
 
 	constructor(elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
 		this.elementId = elementId;
@@ -145,11 +144,14 @@ abstract class AbstractGobanViewer {
 
 class ProblemGobanViewer extends AbstractGobanViewer {
 
+	showSolution = false;
+	autoPlayColor: SGFColor | undefined = undefined;
+	autoPlayTimeout: any;
+
 	constructor(elementId: string, node?: SGFNode, opts?: GobanViewerOpts) {
 		super(elementId, node, opts);
+		this.markSolutions();
 	};
-
-	autoPlayTimeout: any;
 
 	reset() {
 		this.positionViewer.setBgLabel("");
@@ -163,6 +165,22 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 			alert("That's correct!");
 		} else if ((node as SGFNodeWithMetadata)?.failure || (node as SGFNodeWithMetadata)?.offPath) {
 			this.positionViewer.setBgLabel("✗", "red");
+		}
+		this.markSolutions();
+	}
+
+	markSolutions() {
+		const node = this.currentNode;
+		if (this.showSolution) {
+			for (const subnode of node?.children||[]) {
+				let [_, coords] = subnode.playerAndCoordinates();
+				let [row, col] = coordinateToRowColumn(coords);
+				if ((subnode as SGFNodeWithMetadata)?.pathToSolution || (subnode as SGFNodeWithMetadata)?.solution) {
+					this.positionViewer.drawLabel(row, col, "✓", {color: "green"});
+				} else {
+					this.positionViewer.drawLabel(row, col, "✗", {color: "red"});
+				}
+			}
 		}
 	}
 
@@ -179,21 +197,23 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 					console.log("yes");
 				}
 				this.goTo(child);
-				this.autoPlayTimeout = setTimeout(() => {
-					this.autoPlayTimeout = null;
-					if (!child.children?.length) {
-						return;
-					}
-					const first = (child.children || []).find((sub => {
-						if ((sub as SGFNodeWithMetadata).pathToSolution) {
-							return true;
+				if (!this.showSolution) {
+					this.autoPlayTimeout = setTimeout(() => {
+						this.autoPlayTimeout = null;
+						if (!child.children?.length) {
+							return;
 						}
-					}))
-					if (first) {
-						this.goTo(first);
-					}
-					this.goTo(child.children[0]);
-				}, 2 * 250);
+						const first = (child.children || []).find((sub => {
+							if ((sub as SGFNodeWithMetadata).pathToSolution) {
+								return true;
+							}
+						}))
+						if (first) {
+							this.goTo(first);
+						}
+						this.goTo(child.children[0]);
+					}, 2 * 250);
+				}
 				return;
 			}
 		}
@@ -214,7 +234,6 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		if (this.autoPlayTimeout) {
 			return;
 		}
-		// TODO: Autoclick colors
 		const node = this.currentNode.children?.[0];
 		if (!node) {
 			return;
@@ -227,14 +246,11 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 			return;
 		}
 		const path = this.rootNode.findPath(this.currentNode);
-		if ((path?.length || 0) < 2) {
+		if ((path?.length || 0) <= 1) {
 			return;
 		}
 		path.pop();
-		this.currentNode = path[path.length - 1];
-		this.goban = new SGFGoban();
-		this.goban.applyNodes(...path);
-		this.positionViewer.draw(this.goban);
+		this.goTo(path[path.length - 1])
 	}
 
 }
@@ -577,27 +593,27 @@ class GobanPositionViewer {
 		for (const coord in this.goban.labels) {
 			let [row, col] = coordinateToRowColumn(coord);
 			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-			this.drawLabel(row, col, this.goban.labels[coord], { bandWidth: this.bandWidth, unit: this.unit, color: color });
+			this.drawLabel(row, col, this.goban.labels[coord], { color: color });
 		}
 		for (const coord in this.goban.triangles) {
 			let [row, col] = coordinateToRowColumn(coord);
 			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-			this.drawLabel(row, col, "△", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+			this.drawLabel(row, col, "△", { color: color });
 		}
 		for (const coord in this.goban.squares) {
 			let [row, col] = coordinateToRowColumn(coord);
 			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-			this.drawLabel(row, col, "□", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+			this.drawLabel(row, col, "□", { color: color });
 		}
 		for (const coord in this.goban.crosses) {
 			let [row, col] = coordinateToRowColumn(coord);
 			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-			this.drawLabel(row, col, "×", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+			this.drawLabel(row, col, "×", { color: color });
 		}
 		for (const coord in this.goban.circles) {
 			let [row, col] = coordinateToRowColumn(coord);
 			const color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
-			this.drawLabel(row, col, "○", { bandWidth: this.bandWidth, unit: this.unit, color: color });
+			this.drawLabel(row, col, "○", { color: color });
 		}
 		/*
 	return <div style={{}}>
@@ -707,7 +723,7 @@ class GobanPositionViewer {
 		})
 	}
 
-	private drawLabel(row: number, column: number, label: string, props: {bandWidth: number, unit: string, color: string}) {
+	drawLabel(row: number, column: number, label: string, props: {color: string}) {
 		this.drawStone(row, column);
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneDiv = this.getStoneElement(row, column);
@@ -719,7 +735,7 @@ class GobanPositionViewer {
 			textAlign: "center",
 			flexGrow: "1",
 			justifyContent: "center",
-			fontSize: `${props.bandWidth * 0.6}${props.unit}`
+			fontSize: `${this.bandWidth * 0.6}${this.unit}`
 		}).element
 		div.innerHTML = label;
 		stoneDiv.appendChild(div);
