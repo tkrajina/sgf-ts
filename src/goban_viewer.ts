@@ -163,7 +163,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		if (this.showSolution) {
 			this.markSolutions();
 		} else {
-			this.positionViewer.draw(this.goban);
+			this.goTo(this.currentNode);
 		}
 	}
 
@@ -182,12 +182,14 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		const node = this.currentNode;
 		if (this.showSolution) {
 			for (const subnode of node?.children||[]) {
-				let [_, coords] = subnode.playerAndCoordinates();
-				let [row, col] = coordinateToRowColumn(coords);
-				if ((subnode as SGFNodeWithMetadata)?.pathToSolution || (subnode as SGFNodeWithMetadata)?.solution) {
-					this.positionViewer.drawLabel(row, col, "✓", {color: "green"});
-				} else {
-					this.positionViewer.drawLabel(row, col, "✗", {color: "red"});
+				let [color, coords] = subnode.playerAndCoordinates();
+				if (color == this.autoPlayColor) {
+					let [row, col] = coordinateToRowColumn(coords);
+					if ((subnode as SGFNodeWithMetadata)?.pathToSolution || (subnode as SGFNodeWithMetadata)?.solution) {
+						this.positionViewer.drawLabel(row, col, "✓", {color: "green"});
+					} else {
+						this.positionViewer.drawLabel(row, col, "✗", {color: "red"});
+					}
 				}
 			}
 		}
@@ -316,7 +318,7 @@ class GobanPositionViewer {
 		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);
-		if (false && opts?.crop) {
+		if (opts?.crop) {
 			if (opts.crop == "auto" || opts.crop == "square") {
 				const bounds = node.bounds();
 				bounds.increase(this.size, 2, 6);
@@ -325,8 +327,8 @@ class GobanPositionViewer {
 				}
 				let top = bounds.rowMin;
 				let left = bounds.colMin;
-				let right = this.size - bounds.colMax;
-				let bottom = this.size - bounds.rowMax;
+				let right = this.size - bounds.colMax - 1;
+				let bottom = this.size - bounds.rowMax - 1;
 				this.cropTop = this.cropFactor(top);
 				this.cropRight = this.cropFactor(right);
 				this.cropBottom = this.cropFactor(bottom);
@@ -373,8 +375,7 @@ class GobanPositionViewer {
 		return (1 - this.cropTop - this.cropBottom) * this.width;
 	}
 
-	private drawGoban() {
-
+	drawGoban() {
 		this.width = Math.min(
 			this.originalWidth / (1 - this.cropLeft - this.cropRight),
 			this.originalWidth / (1 - this.cropTop - this.cropBottom)

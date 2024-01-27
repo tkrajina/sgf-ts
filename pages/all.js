@@ -1518,7 +1518,7 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
             this.markSolutions();
         }
         else {
-            this.positionViewer.draw(this.goban);
+            this.goTo(this.currentNode);
         }
     };
     ProblemGobanViewer.prototype.goTo = function (node) {
@@ -1537,13 +1537,15 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         if (this.showSolution) {
             for (var _i = 0, _a = (node === null || node === void 0 ? void 0 : node.children) || []; _i < _a.length; _i++) {
                 var subnode = _a[_i];
-                var _b = subnode.playerAndCoordinates(), _ = _b[0], coords = _b[1];
-                var _c = coordinateToRowColumn(coords), row = _c[0], col = _c[1];
-                if ((subnode === null || subnode === void 0 ? void 0 : subnode.pathToSolution) || (subnode === null || subnode === void 0 ? void 0 : subnode.solution)) {
-                    this.positionViewer.drawLabel(row, col, "✓", { color: "green" });
-                }
-                else {
-                    this.positionViewer.drawLabel(row, col, "✗", { color: "red" });
+                var _b = subnode.playerAndCoordinates(), color = _b[0], coords = _b[1];
+                if (color == this.autoPlayColor) {
+                    var _c = coordinateToRowColumn(coords), row = _c[0], col = _c[1];
+                    if ((subnode === null || subnode === void 0 ? void 0 : subnode.pathToSolution) || (subnode === null || subnode === void 0 ? void 0 : subnode.solution)) {
+                        this.positionViewer.drawLabel(row, col, "✓", { color: "green" });
+                    }
+                    else {
+                        this.positionViewer.drawLabel(row, col, "✗", { color: "red" });
+                    }
                 }
             }
         }
@@ -1646,7 +1648,7 @@ var GobanPositionViewer = /** @class */ (function () {
         this.originalWidth = this.width;
         this.unit = (opts === null || opts === void 0 ? void 0 : opts.unit) || "vmin";
         this.rootElement = document.getElementById(this.elementId);
-        if (false && (opts === null || opts === void 0 ? void 0 : opts.crop)) {
+        if (opts === null || opts === void 0 ? void 0 : opts.crop) {
             if (opts.crop == "auto" || opts.crop == "square") {
                 var bounds = node.bounds();
                 bounds.increase(this.size, 2, 6);
@@ -1655,8 +1657,8 @@ var GobanPositionViewer = /** @class */ (function () {
                 }
                 var top_1 = bounds.rowMin;
                 var left = bounds.colMin;
-                var right = this.size - bounds.colMax;
-                var bottom = this.size - bounds.rowMax;
+                var right = this.size - bounds.colMax - 1;
+                var bottom = this.size - bounds.rowMax - 1;
                 this.cropTop = this.cropFactor(top_1);
                 this.cropRight = this.cropFactor(right);
                 this.cropBottom = this.cropFactor(bottom);
