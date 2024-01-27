@@ -82,6 +82,26 @@ export class Bounds {
 			}
 		}
 	}
+
+	increase(size: number, n: number, minDistanceFromBorder: number) {
+		this.colMin = Math.max(0, this.colMin - n);
+		this.colMax = Math.min(size - 1, this.colMax + n);
+		this.rowMin = Math.max(0, this.rowMin - n);
+		this.rowMax = Math.min(size - 1, this.rowMax + n);
+
+		if (this.colMin < minDistanceFromBorder) {
+			this.colMin = 0;
+		}
+		if (this.rowMin < minDistanceFromBorder) {
+			this.rowMin = 0;
+		}
+		if (this.colMax > size - minDistanceFromBorder) {
+			this.colMax = size - 1;
+		}
+		if (this.rowMax < size - minDistanceFromBorder) {
+			this.colMax = size - 1;
+		}
+	}
 }
 
 export function expandCoordinatesRange(_coords: string | SGFCoordinate | string[]) {

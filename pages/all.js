@@ -129,6 +129,24 @@ var Bounds = /** @class */ (function () {
             }
         }
     };
+    Bounds.prototype.increase = function (size, n, minDistanceFromBorder) {
+        this.colMin = Math.max(0, this.colMin - n);
+        this.colMax = Math.min(size - 1, this.colMax + n);
+        this.rowMin = Math.max(0, this.rowMin - n);
+        this.rowMax = Math.min(size - 1, this.rowMax + n);
+        if (this.colMin < minDistanceFromBorder) {
+            this.colMin = 0;
+        }
+        if (this.rowMin < minDistanceFromBorder) {
+            this.rowMin = 0;
+        }
+        if (this.colMax > size - minDistanceFromBorder) {
+            this.colMax = size - 1;
+        }
+        if (this.rowMax < size - minDistanceFromBorder) {
+            this.colMax = size - 1;
+        }
+    };
     return Bounds;
 }());
 exports.Bounds = Bounds;
@@ -1605,18 +1623,14 @@ var GobanPositionViewer = /** @class */ (function () {
         if (opts === null || opts === void 0 ? void 0 : opts.crop) {
             if (opts.crop == "auto" || opts.crop == "square") {
                 var bounds = node.bounds();
+                bounds.increase(this.size, 2, 6);
                 if (opts.crop == "square") {
                     bounds.makeSquare(this.size);
                 }
                 var top_1 = bounds.rowMin;
+                var left = bounds.colMin;
                 var right = this.size - bounds.colMax;
                 var bottom = this.size - bounds.rowMax;
-                var left = bounds.colMin;
-                var safeDistFromBorder = 6;
-                top_1 = top_1 < safeDistFromBorder ? 0 : top_1 - 2;
-                bottom = bottom < safeDistFromBorder ? 0 : bottom - 2;
-                left = left < safeDistFromBorder ? 0 : left - 2;
-                right = right < safeDistFromBorder ? 0 : right - 2;
                 this.cropTop = this.cropFactor(top_1);
                 this.cropRight = this.cropFactor(right);
                 this.cropBottom = this.cropFactor(bottom);

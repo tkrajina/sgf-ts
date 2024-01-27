@@ -294,18 +294,14 @@ class GobanPositionViewer {
 		if (opts?.crop) {
 			if (opts.crop == "auto" || opts.crop == "square") {
 				const bounds = node.bounds();
+				bounds.increase(this.size, 2, 6);
 				if (opts.crop == "square") {
 					bounds.makeSquare(this.size);
 				}
 				let top = bounds.rowMin;
+				let left = bounds.colMin;
 				let right = this.size - bounds.colMax;
 				let bottom = this.size - bounds.rowMax;
-				let left = bounds.colMin;
-				const safeDistFromBorder = 6;
-				top = top < safeDistFromBorder ? 0 : top - 2;
-				bottom = bottom < safeDistFromBorder ? 0 : bottom - 2;
-				left = left < safeDistFromBorder ? 0 : left - 2;
-				right = right < safeDistFromBorder ? 0 : right - 2;
 				this.cropTop = this.cropFactor(top);
 				this.cropRight = this.cropFactor(right);
 				this.cropBottom = this.cropFactor(bottom);
