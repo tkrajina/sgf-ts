@@ -158,6 +158,15 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		super.reset();
 	}
 
+	toggleShowSolution() {
+		this.showSolution = !this.showSolution;
+		if (this.showSolution) {
+			this.markSolutions();
+		} else {
+			this.positionViewer.draw(this.goban);
+		}
+	}
+
 	goTo(node?: SGFNode) {
 		super.goTo(node);
 		if ((node as SGFNodeWithMetadata)?.solution) {
@@ -307,7 +316,7 @@ class GobanPositionViewer {
 		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);
-		if (opts?.crop) {
+		if (false && opts?.crop) {
 			if (opts.crop == "auto" || opts.crop == "square") {
 				const bounds = node.bounds();
 				bounds.increase(this.size, 2, 6);

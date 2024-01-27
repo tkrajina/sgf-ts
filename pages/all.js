@@ -1512,6 +1512,15 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         this.positionViewer.setBgLabel("");
         _super.prototype.reset.call(this);
     };
+    ProblemGobanViewer.prototype.toggleShowSolution = function () {
+        this.showSolution = !this.showSolution;
+        if (this.showSolution) {
+            this.markSolutions();
+        }
+        else {
+            this.positionViewer.draw(this.goban);
+        }
+    };
     ProblemGobanViewer.prototype.goTo = function (node) {
         _super.prototype.goTo.call(this, node);
         if (node === null || node === void 0 ? void 0 : node.solution) {
@@ -1637,7 +1646,7 @@ var GobanPositionViewer = /** @class */ (function () {
         this.originalWidth = this.width;
         this.unit = (opts === null || opts === void 0 ? void 0 : opts.unit) || "vmin";
         this.rootElement = document.getElementById(this.elementId);
-        if (opts === null || opts === void 0 ? void 0 : opts.crop) {
+        if (false && (opts === null || opts === void 0 ? void 0 : opts.crop)) {
             if (opts.crop == "auto" || opts.crop == "square") {
                 var bounds = node.bounds();
                 bounds.increase(this.size, 2, 6);
