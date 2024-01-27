@@ -1499,7 +1499,6 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         }
         else if ((node === null || node === void 0 ? void 0 : node.failure) || (node === null || node === void 0 ? void 0 : node.offPath)) {
             this.positionViewer.setBgLabel("✗", "red");
-            alert("Nope :(");
         }
     };
     ProblemGobanViewer.prototype.onClick = function (row, col, color) {
