@@ -16,11 +16,10 @@ type SGFNodeWithMetadata = SGFNode & {
 const correctWords = ["correct", "točno", "+", "right"];
 
 function markPathsToSolution(node: SGFNode) {
-	node.walk((path: SGFNode[]) => {
-		const last = path[path.length - 1];
-		if (!last.children?.length) {
+	node.walk((node: SGFNode, path: SGFNode[]) => {
+		if (!node.children?.length) {
 			let isSolution = false;
-			const com = last?.getComment();
+			const com = node?.getComment();
 			for (const word of correctWords) {
 				if (com?.trim()?.toLowerCase()?.indexOf(word) == 0) {
 					isSolution = true;
@@ -30,9 +29,9 @@ function markPathsToSolution(node: SGFNode) {
 				}
 			}
 			if (isSolution) {
-				(last as SGFNodeWithMetadata).solution = true;
+				(node as SGFNodeWithMetadata).solution = true;
 			} else {
-				(last as SGFNodeWithMetadata).failure = true;
+				(node as SGFNodeWithMetadata).failure = true;
 			}
 		}
 	})
@@ -251,6 +250,34 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		this.goTo(node);
 	}
 
+	animate(nodes: SGFNode[]) {
+		if (this.autoPlayTimeout) {
+			return;
+		}
+		let i = 0;
+		this.autoPlayTimeout = setInterval(async () => {
+			this.goTo(nodes[i]);
+			i++;
+			if (i >= nodes.length) {
+				clearInterval(this.autoPlayTimeout);
+			}
+		}, 500);
+	}
+
+	animateSolution() {
+		let firstSolution: SGFNode[];
+		this.rootNode.walkUntil((node: SGFNode, path: SGFNode[]) => {
+			if ((node as SGFNodeWithMetadata)?.solution) {
+				firstSolution = path;
+				return true;
+			}
+			return false;
+		});
+		if (firstSolution) {
+			this.animate(firstSolution);
+		}
+	}
+
 	previous() {
 		if (this.autoPlayTimeout) {
 			return;
@@ -262,7 +289,6 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		path.pop();
 		this.goTo(path[path.length - 1])
 	}
-
 }
 
 interface GobanViewerOpts {

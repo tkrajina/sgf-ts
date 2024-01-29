@@ -163,11 +163,11 @@ export class SGFNode {
 	constructor(public properties: SGFProperty[] = [], public children: SGFNode[] = []) {}
 
 	/** Walk through the subtree, if f() return `false` -> stop "walking". */
-	walkWhile(f: (path: SGFNode[]) => boolean, path?: SGFNode[]): boolean {
+	walkWhile(f: (lastNode: SGFNode, path: SGFNode[]) => boolean, path?: SGFNode[]): boolean {
 		if (!path) {
 			path = [this];
 		}
-		if (!f(path)) {
+		if (!f(path[path.length - 1], path)) {
 			return false;
 		}
 		for (const sub of this?.children||[]) {
@@ -178,9 +178,15 @@ export class SGFNode {
 		return true;
 	}
 
-	walk(f: (subnode: SGFNode[]) => void) {
-		this.walkWhile((path: SGFNode[]) => {
-			f(path);
+	walkUntil(f: (lastNode: SGFNode, path: SGFNode[]) => boolean, path?: SGFNode[]) {
+		this.walkWhile((node: SGFNode, path: SGFNode[]) => {
+			return !f(node, path);
+		})
+	}
+
+	walk(f: (node: SGFNode, subnode: SGFNode[]) => void) {
+		this.walkWhile((node: SGFNode, path: SGFNode[]) => {
+			f(node, path);
 			return true;
 		})
 	}
@@ -207,8 +213,7 @@ export class SGFNode {
 
 	bounds() {
 		const bounds = new Bounds();
-		this.walk((path: SGFNode[]) => {
-			const node = path[path.length - 1];
+		this.walk((node: SGFNode, path: SGFNode[]) => {
 			const takenCoords = [];
 			for (const tr of node.getProperties(Tag.AddWhite) || []) {
 				takenCoords.push(...expandCoordinatesRange(tr))
