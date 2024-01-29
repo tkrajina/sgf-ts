@@ -350,14 +350,17 @@ class GobanPositionViewer {
 				if (opts.crop == "square") {
 					bounds.makeSquare(this.size);
 				}
+				// alert(JSON.stringify(bounds))
 				let top = bounds.rowMin;
 				let left = bounds.colMin;
 				let right = this.size - bounds.colMax - 1;
 				let bottom = this.size - bounds.rowMax - 1;
+				// alert(`${top} ${right} ${bottom} ${left}`);
 				this.cropTop = this.cropFactor(top);
 				this.cropRight = this.cropFactor(right);
 				this.cropBottom = this.cropFactor(bottom);
 				this.cropLeft = this.cropFactor(left);
+				// alert(this.cropTop + "," + this.cropRight + "," + this.cropBottom + "," + this.cropLeft);
 			} else {
 				this.cropTop = this.cropFactor(opts.crop[0] as number || 0);
 				this.cropRight = this.cropFactor(opts.crop[1] as number || 0);

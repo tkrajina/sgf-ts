@@ -51,7 +51,7 @@
             });
             const params = new URLSearchParams(window.location.search);
             let sgf = params.get("sgf");
-            //sgf = `(;GM[1]FF[4]SZ[19]AP[Sabaki:0.52.2]AB[ro:rq][pp:qp][oq:os]AW[qn:qo][rn][po][np:op][pq:ps][qq][rr]PL[B]VW[ll:ss]FG[4353:Black to play]CA[UTF-8]C[Crni igra.](;B[rs]C[Bravo!];W[sr];B[qr]C[CORRECT];W[qs];B[qr]C[Correct])(;B[qs]C[Krivo jer...];W[qr];B[sr];W[rs](;B[sq];W[so];B[ss];W[sp])(;B[ss];W[sq])))`;
+            // sgf = "(;GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]RU[Japanese]SZ[19]KM[0.00]PW[Weiß]PB[Schwarz]AW[ac][bc][bd][cd][ce][de][he][df][ef][gf]AB[ab][bb][cc][ad][dd][ed][be][bf][cf][dg][eg]PL[B](;B[ff];W[ae](;B[ee];W[fe](;B[ad]C[+])(;B[fg]C[+]))(;B[fe]C[+])(;B[fg];W[fe];B[ee]C[+])(;B[af];W[fe](;B[fg];W[ee])(;B[ee];W[fg])(;B[ad];W[fg])))(;B[ee];W[ff])(;B[fe];W[ff])) ";
             if (!sgf) {
                 alert("Missing sgf parameter");
                 sgf = "(;)";

@@ -142,13 +142,14 @@ var Bounds = /** @class */ (function () {
             }
             w = this.colMax - this.colMin;
             h = this.rowMax - this.rowMin;
+            // console.log(`${JSON.stringify(this)} w=${w}, h=${h}`);
             if (w > h) {
                 n++;
                 if (n % 2 == 0) {
                     this.rowMin = Math.max(0, this.rowMin - 1);
                 }
                 else {
-                    this.rowMax = Math.min(size, this.rowMax + 1);
+                    this.rowMax = Math.min(size - 1, this.rowMax + 1);
                 }
             }
             else if (w < h) {
@@ -157,7 +158,7 @@ var Bounds = /** @class */ (function () {
                     this.colMin = Math.max(0, this.colMin - 1);
                 }
                 else {
-                    this.colMax = Math.min(size, this.colMax + 1);
+                    this.colMax = Math.min(size - 1, this.colMax + 1);
                 }
             }
             else {
@@ -176,10 +177,10 @@ var Bounds = /** @class */ (function () {
         if (this.rowMin < minDistanceFromBorder) {
             this.rowMin = 0;
         }
-        if (this.colMax > size - minDistanceFromBorder) {
+        if (this.colMax + minDistanceFromBorder > size) {
             this.colMax = size - 1;
         }
-        if (this.rowMax < size - minDistanceFromBorder) {
+        if (this.rowMax + minDistanceFromBorder > size) {
             this.colMax = size - 1;
         }
     };
@@ -1724,14 +1725,17 @@ var GobanPositionViewer = /** @class */ (function () {
                 if (opts.crop == "square") {
                     bounds.makeSquare(this.size);
                 }
+                // alert(JSON.stringify(bounds))
                 var top_1 = bounds.rowMin;
                 var left = bounds.colMin;
                 var right = this.size - bounds.colMax - 1;
                 var bottom = this.size - bounds.rowMax - 1;
+                // alert(`${top} ${right} ${bottom} ${left}`);
                 this.cropTop = this.cropFactor(top_1);
                 this.cropRight = this.cropFactor(right);
                 this.cropBottom = this.cropFactor(bottom);
                 this.cropLeft = this.cropFactor(left);
+                // alert(this.cropTop + "," + this.cropRight + "," + this.cropBottom + "," + this.cropLeft);
             }
             else {
                 this.cropTop = this.cropFactor(opts.crop[0] || 0);

@@ -63,19 +63,20 @@ export class Bounds {
 			}
 			w = this.colMax - this.colMin;
 			h = this.rowMax - this.rowMin;
+			// console.log(`${JSON.stringify(this)} w=${w}, h=${h}`);
 			if (w > h) {
 				n++;
 				if (n % 2 == 0) {
 					this.rowMin = Math.max(0, this.rowMin - 1);
 				} else {
-					this.rowMax = Math.min(size, this.rowMax + 1);
+					this.rowMax = Math.min(size - 1, this.rowMax + 1);
 				}
 			} else if (w < h) {
 				n++;
 				if (n % 2 == 0) {
 					this.colMin = Math.max(0, this.colMin - 1);
 				} else {
-					this.colMax = Math.min(size, this.colMax + 1);
+					this.colMax = Math.min(size - 1, this.colMax + 1);
 				}
 			} else {
 				return;
@@ -95,10 +96,10 @@ export class Bounds {
 		if (this.rowMin < minDistanceFromBorder) {
 			this.rowMin = 0;
 		}
-		if (this.colMax > size - minDistanceFromBorder) {
+		if (this.colMax + minDistanceFromBorder > size) {
 			this.colMax = size - 1;
 		}
-		if (this.rowMax < size - minDistanceFromBorder) {
+		if (this.rowMax + minDistanceFromBorder > size) {
 			this.colMax = size - 1;
 		}
 	}
