@@ -4,7 +4,7 @@ import { coordinateToRowColumn, expandCoordinatesRange, rowColumnToCoordinate, S
 export class GobanPosition {
 	goban: SGFColor[][] = [];
 	constructor(public readonly size: number, goban?: SGFColor[][]) {
-		console.log("size=" + size)
+		// console.log("size=" + size)
 		this.size = size;
 		if (goban) {
 			this.goban = goban;
@@ -237,10 +237,9 @@ export class SGFGoban extends GobanPosition {
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Square))) { this.squares[tr] = true; }
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.X))) { this.crosses[tr] = true; }
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Circle))) { this.circles[tr] = true; }
-		for (const lb of node.getProperties(Tag.Label)||[]) {
-			const parts = lb.split(":");
-			for (let coord of expandCoordinatesRange(parts[0])) {
-				this.labels[coord] = parts[1];
+		for (const lb of node.getLabels()||[]) {
+			for (let coord of expandCoordinatesRange(lb.coord)) {
+				this.labels[coord] = lb.label;
 			}
 		}
 

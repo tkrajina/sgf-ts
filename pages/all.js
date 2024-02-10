@@ -70,16 +70,12 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SGFGoban = exports.GobanPosition = exports.isAlpha = exports.SGFParser = exports.parseSGFCollection = exports.parseSGF = exports.SGFProperty = exports.SGFNode = exports.rowColumnToCoordinate = exports.coordinateToRowColumn = exports.SGFColor = exports.expandCoordinatesRange = exports.Bounds = exports.Tag = void 0;
 var Tag;
 (function (Tag) {
-    Tag["AddBlack"] = "AB";
-    Tag["AddWhite"] = "AW";
     Tag["Annotations"] = "AN";
     Tag["Application"] = "AP";
-    Tag["Black"] = "B";
     Tag["BlackRank"] = "BR";
     Tag["BlackTeam"] = "BT";
     Tag["Comment"] = "C";
@@ -95,7 +91,6 @@ var Tag;
     Tag["Overtime"] = "OT";
     Tag["BlackName"] = "PB";
     Tag["Place"] = "PC";
-    Tag["Player"] = "PL";
     Tag["WhiteName"] = "PW";
     Tag["Result"] = "RE";
     Tag["Round"] = "RO";
@@ -104,9 +99,13 @@ var Tag;
     Tag["Size"] = "SZ";
     Tag["TimeLimit"] = "TM";
     Tag["User"] = "US";
-    Tag["White"] = "W";
     Tag["WhiteRank"] = "WR";
     Tag["WhiteTeam"] = "WT";
+    Tag["Player"] = "PL";
+    Tag["AddBlack"] = "AB";
+    Tag["AddWhite"] = "AW";
+    Tag["Black"] = "B";
+    Tag["White"] = "W";
     // Additional
     Tag["Triangle"] = "TR";
     Tag["Square"] = "SQ";
@@ -167,21 +166,29 @@ var Bounds = /** @class */ (function () {
         }
     };
     Bounds.prototype.increase = function (size, n, minDistanceFromBorder) {
-        this.colMin = Math.max(0, this.colMin - n);
-        this.colMax = Math.min(size - 1, this.colMax + n);
-        this.rowMin = Math.max(0, this.rowMin - n);
-        this.rowMax = Math.min(size - 1, this.rowMax + n);
         if (this.colMin < minDistanceFromBorder) {
             this.colMin = 0;
+        }
+        else {
+            this.colMin = Math.max(0, this.colMin - n);
         }
         if (this.rowMin < minDistanceFromBorder) {
             this.rowMin = 0;
         }
-        if (this.colMax + minDistanceFromBorder > size) {
+        else {
+            this.rowMin = Math.max(0, this.rowMin - n);
+        }
+        if (this.colMax + minDistanceFromBorder >= size) {
             this.colMax = size - 1;
         }
-        if (this.rowMax + minDistanceFromBorder > size) {
-            this.colMax = size - 1;
+        else {
+            this.colMax = Math.min(size - 1, this.colMax + n);
+        }
+        if (this.rowMax + minDistanceFromBorder >= size) {
+            this.rowMax = size - 1;
+        }
+        else {
+            this.rowMax = Math.min(size - 1, this.rowMax + n);
         }
     };
     return Bounds;
@@ -244,6 +251,106 @@ var SGFNode = /** @class */ (function () {
         this.properties = properties;
         this.children = children;
     }
+    SGFNode.prototype.flattenToNode = function (target, enumerate) {
+        var _a;
+        var _b;
+        if (enumerate === void 0) { enumerate = false; }
+        var path = this.findPath(target);
+        if (!(path === null || path === void 0 ? void 0 : path.length)) {
+            return;
+        }
+        enumerate = true;
+        console.log("flattening with ".concat(path === null || path === void 0 ? void 0 : path.length, " nodes"));
+        var rootPropertiesToKeep = (_a = {},
+            _a[Tag.Annotations] = true,
+            _a[Tag.Application] = true,
+            _a[Tag.BlackRank] = true,
+            _a[Tag.BlackTeam] = true,
+            _a[Tag.Copyright] = true,
+            _a[Tag.Date] = true,
+            _a[Tag.Event] = true,
+            _a[Tag.FileFormat] = true,
+            _a[Tag.Game] = true,
+            _a[Tag.GameName] = true,
+            _a[Tag.Handicap] = true,
+            _a[Tag.Komi] = true,
+            _a[Tag.Opening] = true,
+            _a[Tag.Overtime] = true,
+            _a[Tag.BlackName] = true,
+            _a[Tag.Place] = true,
+            _a[Tag.WhiteName] = true,
+            _a[Tag.Result] = true,
+            _a[Tag.Round] = true,
+            _a[Tag.Rules] = true,
+            _a[Tag.Source] = true,
+            _a[Tag.Size] = true,
+            _a[Tag.TimeLimit] = true,
+            _a[Tag.User] = true,
+            _a[Tag.WhiteRank] = true,
+            _a[Tag.WhiteTeam] = true,
+            _a);
+        var enumeratedLabels = {};
+        var n = 0;
+        for (var _i = 0, path_1 = path; _i < path_1.length; _i++) {
+            var tmpNode = path_1[_i];
+            var _c = tmpNode.playerAndCoordinates(), color = _c[0], coord = _c[1];
+            if (color && coord) {
+                if (!enumeratedLabels[coord]) {
+                    enumeratedLabels[coord] = [];
+                }
+                n++;
+                enumeratedLabels[coord].push(n);
+            }
+        }
+        var newRootNode = new SGFNode();
+        newRootNode.properties = this.properties.filter(function (p) { return rootPropertiesToKeep[p.name]; });
+        var targetTagsToCopy = [Tag.Comment, Tag.Triangle, Tag.Square, Tag.X, Tag.Circle, Tag.Label];
+        for (var _d = 0, targetTagsToCopy_1 = targetTagsToCopy; _d < targetTagsToCopy_1.length; _d++) {
+            var tag = targetTagsToCopy_1[_d];
+            for (var _e = 0, _f = target.getProperties(tag) || []; _e < _f.length; _e++) {
+                var val = _f[_e];
+                newRootNode.addProperty(tag, val);
+            }
+            ;
+        }
+        var goban = new SGFGoban();
+        goban.applyNodes.apply(goban, path);
+        for (var row = 0; row < goban.size; row++) {
+            for (var col = 0; col < goban.size; col++) {
+                var coord = rowColumnToCoordinate([row, col]);
+                var color = goban.stoneAt(coord);
+                if (color === SGFColor.BLACK) {
+                    // console.log(`Adding black to ${coord}`);
+                    newRootNode.addProperty(Tag.AddBlack, coord);
+                }
+                if (color === SGFColor.WHITE) {
+                    // console.log(`Adding white to ${coord}`);
+                    newRootNode.addProperty(Tag.AddWhite, coord);
+                }
+            }
+        }
+        newRootNode.children = target.children;
+        var nextColor = target.getProperty(Tag.Player);
+        if (!nextColor) {
+            var thisMoveColor = ((target === null || target === void 0 ? void 0 : target.playerAndCoordinates()) || [SGFColor.INVALID])[0];
+            var nextMoveColor = (((_b = target === null || target === void 0 ? void 0 : target.firstChild()) === null || _b === void 0 ? void 0 : _b.playerAndCoordinates()) || [SGFColor.INVALID])[0];
+            if (nextMoveColor && nextMoveColor === SGFColor.WHITE) {
+                newRootNode.setProperty(Tag.Player, SGFColor.WHITE);
+            }
+            else if (thisMoveColor && thisMoveColor === SGFColor.BLACK) {
+                newRootNode.setProperty(Tag.Player, SGFColor.WHITE);
+            }
+        }
+        if (enumerate) {
+            for (var coord in enumeratedLabels) {
+                for (var _g = 0, _h = enumeratedLabels[coord]; _g < _h.length; _g++) {
+                    var lb = _h[_g];
+                    newRootNode.addProperty(Tag.Label, "".concat(coord, ":").concat(lb));
+                }
+            }
+        }
+        return newRootNode;
+    };
     /** Walk through the subtree, if f() return `false` -> stop "walking". */
     SGFNode.prototype.walkWhile = function (f, path) {
         if (!path) {
@@ -309,6 +416,7 @@ var SGFNode = /** @class */ (function () {
             for (var _d = 0, takenCoords_1 = takenCoords; _d < takenCoords_1.length; _d++) {
                 var coord = takenCoords_1[_d];
                 var _e = coordinateToRowColumn(coord), row = _e[0], col = _e[1];
+                console.log("".concat(coord, " => row=").concat(row, ", col=").concat(col));
                 bounds.apply(row, col);
             }
         });
@@ -341,6 +449,20 @@ var SGFNode = /** @class */ (function () {
         }
         return props;
     };
+    SGFNode.prototype.getLabels = function () {
+        var res = [];
+        for (var _i = 0, _a = this.getProperties(Tag.Label) || []; _i < _a.length; _i++) {
+            var prop = _a[_i];
+            var pos = prop.indexOf(":");
+            if (pos > 0) {
+                res.push({
+                    coord: prop.substring(0, pos),
+                    label: prop.substring(pos + 1)
+                });
+            }
+        }
+        return res;
+    };
     SGFNode.prototype.getComment = function () {
         return this.getProperty(Tag.Comment);
     };
@@ -359,6 +481,15 @@ var SGFNode = /** @class */ (function () {
         for (var i in this.properties) {
             if (this.properties[i].name == prop) {
                 this.properties[i].values = [val];
+                return;
+            }
+        }
+        this.properties.push(new SGFProperty(prop, [val]));
+    };
+    SGFNode.prototype.addProperty = function (prop, val) {
+        for (var i in this.properties) {
+            if (this.properties[i].name == prop) {
+                this.properties[i].values.push(val);
                 return;
             }
         }
@@ -407,6 +538,13 @@ var SGFNode = /** @class */ (function () {
     SGFNode.prototype.prependNode = function (node) {
         this.children.unshift(node);
     };
+    SGFNode.prototype.firstChild = function () {
+        var _a;
+        if (!((_a = this.children) === null || _a === void 0 ? void 0 : _a.length)) {
+            return undefined;
+        }
+        return this.children[0];
+    };
     SGFNode.prototype.playerAndCoordinates = function () {
         var b = this.getProperty(Tag.Black);
         if (b !== undefined) {
@@ -417,6 +555,23 @@ var SGFNode = /** @class */ (function () {
             return [SGFColor.WHITE, w];
         }
         return [undefined, undefined];
+    };
+    SGFNode.prototype.mainLine = function () {
+        var _a;
+        var path = [];
+        var tmpNode = this;
+        while (true) {
+            if (tmpNode) {
+                path.push(tmpNode);
+                if ((_a = tmpNode.children) === null || _a === void 0 ? void 0 : _a[0]) {
+                    tmpNode = tmpNode.children[0];
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        return path;
     };
     return SGFNode;
 }());
@@ -625,7 +780,7 @@ var GobanPosition = /** @class */ (function () {
     function GobanPosition(size, goban) {
         this.size = size;
         this.goban = [];
-        console.log("size=" + size);
+        // console.log("size=" + size)
         this.size = size;
         if (goban) {
             this.goban = goban;
@@ -866,12 +1021,11 @@ var SGFGoban = /** @class */ (function (_super) {
             var tr = _h[_g];
             this.circles[tr] = true;
         }
-        for (var _j = 0, _k = node.getProperties(Tag.Label) || []; _j < _k.length; _j++) {
+        for (var _j = 0, _k = node.getLabels() || []; _j < _k.length; _j++) {
             var lb = _k[_j];
-            var parts = lb.split(":");
-            for (var _l = 0, _m = expandCoordinatesRange(parts[0]); _l < _m.length; _l++) {
+            for (var _l = 0, _m = expandCoordinatesRange(lb.coord); _l < _m.length; _l++) {
                 var coord = _m[_l];
-                this.labels[coord] = parts[1];
+                this.labels[coord] = lb.label;
             }
         }
         var _o = node.playerAndCoordinates(), color = _o[0], coords = _o[1];
@@ -913,538 +1067,10 @@ var GroupInfo = /** @class */ (function () {
     }
     return GroupInfo;
 }());
-var NEXT_PLAYER_LABEL = "●";
-var TAG_LABELS = (_a = {},
-    _a[Tag.Triangle] = "△",
-    _a[Tag.Square] = "□",
-    _a[Tag.Circle] = "○",
-    _a[Tag.X] = "×",
-    _a[Tag.Black] = NEXT_PLAYER_LABEL,
-    _a[Tag.White] = NEXT_PLAYER_LABEL,
-    _a[Tag.Label] = "special case",
-    _a);
-// const IS_NIGHT_MODE = !!document.getElementsByClassName("nightMode")?.length;
-// const IS_ANDROID = window.navigator.userAgent.toLowerCase().indexOf("android") > 0
-var bgColor = "#ebb063";
-var blackStoneColor = "black";
-var whiteStoneColor = "white";
-// if (IS_NIGHT_MODE && IS_ANDROID) {
-// 	console.log("android in dark mode!")
-// 	bgColor = "#184c96"; // invert of original bgColor
-// 	blackStoneColor = "white";
-// 	whiteStoneColor = "black";
-// }
-var Goban = /** @class */ (function () {
-    function Goban(originalSidePx) {
-        var _a;
-        this.originalSidePx = originalSidePx;
-        this.initialSkip = 0;
-        this.speedCoef = 1;
-        this.positions = [];
-        this.cropTop = 0;
-        this.cropRight = 0;
-        this.cropBottom = 0;
-        this.cropLeft = 0;
-        this.position = 0;
-        this.stopAnimation();
-        this.drawGoban();
-        if ((_a = this.positions) === null || _a === void 0 ? void 0 : _a.length) {
-            this.drawBoard(0);
-        }
-        this.initDownloadLink();
-        if (this.initialSkip) {
-            this.initialAnimation();
-        }
-    }
-    Goban.prototype.getCommentAndDirectives = function (node) {
-        var commentCleaned = [];
-        var directives = {};
-        var comments = node.getProperties(Tag.Comment);
-        if ((comments === null || comments === void 0 ? void 0 : comments.length) > 0) {
-            for (var _i = 0, comments_1 = comments; _i < comments_1.length; _i++) {
-                var comment = comments_1[_i];
-                console.log("comment:" + comment);
-                for (var _a = 0, _b = comment.split("\n"); _a < _b.length; _a++) {
-                    var line = _b[_a];
-                    line = line.trim();
-                    console.log("line:" + line);
-                    if ((line === null || line === void 0 ? void 0 : line[0]) === "!") {
-                        line = line.substring(1);
-                        var parts = line.split(/\s+/);
-                        directives[parts.shift().toUpperCase()] = parts.join(" ").trim() || "true";
-                    }
-                    else {
-                        commentCleaned.push(line);
-                    }
-                }
-            }
-        }
-        return { comment: commentCleaned.join("\n"), directives: directives };
-    };
-    Goban.prototype.getPropertyOrCommandDirective = function (name, node) {
-        var directives = this.getCommentAndDirectives(node).directives;
-        if (directives[name]) {
-            return directives[name];
-        }
-        return node.getProperty(name);
-    };
-    Goban.prototype.cropFactor = function (cropFactor) {
-        if (!cropFactor) {
-            return cropFactor;
-        }
-        if (cropFactor >= 1) {
-            var res_1 = cropFactor / this.boardSize - 0.25 / this.boardSize;
-            console.log("".concat(cropFactor, " -> ").concat(res_1));
-            return res_1;
-        }
-        var res = Math.round(this.boardSize * cropFactor) / this.boardSize - .25 / this.boardSize;
-        console.log("".concat(cropFactor, " -> ").concat(res));
-        return res;
-    };
-    Goban.prototype.parseGolangPositions = function (content) {
-        var _a;
-        var rootNode = parseSGF(content);
-        this.sgf = content;
-        var goban = new SGFGoban(rootNode);
-        this.boardSize = goban.size;
-        var positions = [];
-        var n = 0;
-        var node = rootNode;
-        for (;; node = node.children[0]) {
-            n++;
-            if (positions.length == 1) {
-                // Sometimes the first position has no "last move" => need to find out who's next:
-                if (node.getProperty(Tag.White)) {
-                    positions[0].nextToPlay = SGFColor.WHITE;
-                }
-                else if (node.getProperty(Tag.Black)) {
-                    positions[0].nextToPlay = SGFColor.BLACK;
-                }
-            }
-            var crop = this.getPropertyOrCommandDirective("CROP", node) || "";
-            if ((crop === null || crop === void 0 ? void 0 : crop.trim()) && crop.trim() != "auto") {
-                var parts = crop.trim().split(/[\s,]+/) || ["0", "0", "0", "0"];
-                this.cropTop = this.cropFactor(parseFloat(parts[0]) || 0);
-                this.cropRight = this.cropFactor(parseFloat(parts[1]) || 0);
-                this.cropBottom = this.cropFactor(parseFloat(parts[2]) || 0);
-                this.cropLeft = this.cropFactor(parseFloat(parts[3]) || 0);
-            }
-            goban.applyNodes(node);
-            positions.push(goban);
-            goban = goban.clone();
-            var skip = this.getPropertyOrCommandDirective("SKIP", node);
-            if (skip) {
-                this.initialSkip = parseInt(skip);
-            }
-            var start = this.getPropertyOrCommandDirective("START", node);
-            if (start !== undefined) {
-                this.initialSkip = n - 1;
-            }
-            var speed = this.getPropertyOrCommandDirective("SPEED", node) || "";
-            if (speed) {
-                this.speedCoef = parseInt(speed.trim()) || 1;
-            }
-            if (!((_a = node.children) === null || _a === void 0 ? void 0 : _a.length)) {
-                break;
-            }
-        }
-        if (!this.cropTop && !this.cropBottom && !this.cropLeft && !this.cropRight) {
-            this.autocrop(goban);
-        }
-        var ankiFrom = parseInt(this.getPropertyOrCommandDirective("ANKI", node));
-        if (!isNaN(ankiFrom)) {
-            if (ankiFrom > 0) {
-                ankiFrom = -ankiFrom;
-            }
-            this.initialSkip = n + ankiFrom - 1;
-        }
-        // alert(this.initialSkip);
-        // for (const p of positions) {
-        // 	console.log("pos:\n"+p.debugStr());
-        // }
-        return positions;
-    };
-    Goban.prototype.autocrop = function (goban) {
-        var rowMax = 0, rowMin = goban.size, colMax = 0, colMin = goban.size;
-        //goban.debugStr();
-        var stones = 0;
-        var empty = SGFColor.NONE.repeat(goban.size);
-        for (var rowNo = 0; rowNo < goban.size; rowNo++) {
-            var row = goban.row(rowNo).join("");
-            if (row !== empty) {
-                stones++;
-                rowMax = Math.max(rowMax, rowNo);
-                rowMin = Math.min(rowMin, rowNo);
-            }
-        }
-        if (stones === 0) {
-            return;
-        }
-        for (var colNo = 0; colNo < goban.size; colNo++) {
-            var col = goban.column(colNo).join("");
-            if (col !== empty) {
-                colMax = Math.max(colMax, colNo);
-                colMin = Math.min(colMin, colNo);
-            }
-        }
-        if (colMax - colMin < goban.size / 2) {
-            this.cropLeft = this.cropFactor(Math.min(1, Math.max(0, (colMin / goban.size) - .15)));
-            this.cropRight = this.cropFactor(Math.min(1, Math.max(0, 1 - (colMax / goban.size) - .15)));
-        }
-        if (rowMax - rowMin < goban.size / 2) {
-            this.cropTop = this.cropFactor(Math.min(1, Math.max(0, (rowMin / goban.size) - .15)));
-            this.cropBottom = this.cropFactor(Math.min(1, Math.max(0, 1 - (rowMax / goban.size) - .15)));
-        }
-    };
-    Goban.prototype.drawGoban = function () {
-        this.containerElement = document.getElementById("goban");
-        this.positions = this.parseGolangPositions(this.containerElement.innerText.trim());
-        var sidePx = Math.min(this.originalSidePx / (1 - this.cropLeft - this.cropRight), this.originalSidePx / (1 - this.cropTop - this.cropBottom));
-        console.log("board size: ".concat(this.boardSize));
-        this.bandWitdh = sidePx / this.boardSize;
-        this.stoneSide = this.bandWitdh * 0.95;
-        var containerWindowDiv = document.createElement("div");
-        containerWindowDiv.style.position = "relative";
-        containerWindowDiv.style.overflow = "hidden";
-        //containerWindowDiv.style.border = "5px solid red";
-        containerWindowDiv.style.width = "".concat((1 - this.cropRight - this.cropLeft) * sidePx, "px");
-        containerWindowDiv.style.height = "".concat((1 - this.cropBottom - this.cropTop) * sidePx, "px");
-        this.gobanDiv = document.createElement("div");
-        this.gobanDiv.style.position = "absolute";
-        this.gobanDiv.style.top = "".concat((-this.cropTop) * sidePx, "px");
-        this.gobanDiv.style.left = "".concat((-this.cropLeft) * sidePx, "px");
-        this.gobanDiv.style.overflow = "hidden";
-        this.gobanDiv.style.marginBottom = "".concat(-50, "px");
-        this.gobanDiv.style.backgroundColor = bgColor;
-        this.gobanDiv.style.width = "".concat(sidePx, "px");
-        this.gobanDiv.style.height = "".concat(sidePx, "px");
-        containerWindowDiv.appendChild(this.gobanDiv);
-        var gobanLinesDiv = document.createElement("div");
-        gobanLinesDiv.style.position = "absolute";
-        gobanLinesDiv.style.width = "".concat(sidePx, "px");
-        gobanLinesDiv.style.height = "".concat(sidePx, "px");
-        gobanLinesDiv.style.left = "".concat(this.bandWitdh / 2, "px");
-        gobanLinesDiv.style.top = "".concat(this.bandWitdh / 2, "px");
-        gobanLinesDiv.style.backgroundColor = bgColor;
-        this.gobanDiv.appendChild(gobanLinesDiv);
-        for (var i = 0; i < this.boardSize; i++) {
-            for (var j = 0; j < 2; j++) {
-                var lineDiv = document.createElement("div");
-                lineDiv.style.border = "0.5px solid gray";
-                lineDiv.style.position = "absolute";
-                lineDiv.style.borderWidth = "1px 1px 0px 0px";
-                if (j == 0) {
-                    lineDiv.style.width = "0.5px";
-                    lineDiv.style.height = "".concat(sidePx - this.bandWitdh, "px");
-                    lineDiv.style.left = "".concat(i * this.bandWitdh - 1, "px");
-                    lineDiv.style.top = "".concat(0, "px");
-                }
-                else {
-                    lineDiv.style.width = "".concat(sidePx - this.bandWitdh, "px");
-                    lineDiv.style.height = "1px";
-                    lineDiv.style.top = "".concat(i * this.bandWitdh - 1, "px");
-                    lineDiv.style.left = "".concat(0, "px");
-                }
-                gobanLinesDiv.appendChild(lineDiv);
-            }
-        }
-        this.containerElement.innerHTML = "";
-        this.containerElement.appendChild(containerWindowDiv);
-        this.drawHoshi();
-    };
-    Goban.prototype.drawBoard = function (position) {
-        if ("number" === typeof position) {
-            this.position = position;
-        }
-        if (this.position >= this.positions.length - 1) {
-            this.stopAnimation();
-        }
-        this.position = this.position % this.positions.length;
-        if (this.position < 0) {
-            this.position += this.positions.length;
-        }
-        var el = document.getElementById("goban_position");
-        if (el) {
-            el.innerHTML = "".concat(this.position + 1, "/").concat(this.positions.length);
-        }
-        this.drawStones(this.positions[this.position]);
-    };
-    Goban.prototype.drawHoshi = function () {
-        var hoshiRadious = this.stoneSide / 4;
-        var hoshiPositions = [];
-        switch (this.boardSize) {
-            case 19:
-                hoshiPositions = [
-                    [3, 3], [3, 9], [3, 15],
-                    [9, 3], [9, 9], [9, 15],
-                    [15, 3], [15, 9], [15, 15],
-                ];
-                break;
-            case 13:
-                hoshiPositions = [
-                    [3, 3], [3, 9],
-                    [6, 6],
-                    [9, 3], [9, 9],
-                ];
-                break;
-            case 9:
-                hoshiPositions = [
-                    [2, 2], [2, 6],
-                    [6, 2], [6, 6],
-                ];
-                break;
-        }
-        for (var _i = 0, hoshiPositions_1 = hoshiPositions; _i < hoshiPositions_1.length; _i++) {
-            var pos = hoshiPositions_1[_i];
-            var row = pos[0], column = pos[1];
-            var id = "hoshi-".concat(row, "-").concat(column);
-            var hoshiDiv = document.createElement("div");
-            hoshiDiv.id = id;
-            hoshiDiv.style.position = "absolute";
-            hoshiDiv.style.textAlign = "center";
-            hoshiDiv.style.left = "".concat((0.5 + column) * this.bandWitdh - 0.5 * hoshiRadious, "px");
-            hoshiDiv.style.top = "".concat((0.5 + row) * this.bandWitdh - 0.5 * hoshiRadious, "px");
-            hoshiDiv.style.width = "".concat(hoshiRadious, "px");
-            hoshiDiv.style.height = "".concat(hoshiRadious, "px");
-            hoshiDiv.style.backgroundColor = "gray";
-            hoshiDiv.style.borderRadius = "".concat(hoshiRadious * 0.5, "px");
-            this.gobanDiv.appendChild(hoshiDiv);
-        }
-    };
-    Goban.prototype.drawStones = function (g) {
-        var _a;
-        for (var col = 0; col < this.boardSize; col++) {
-            for (var row = 0; row < this.boardSize; row++) {
-                this.drawStone(g, row, col);
-            }
-        }
-        var turnEl = document.getElementById("goban_turn");
-        if (turnEl) {
-            turnEl.style.backgroundColor = bgColor;
-            if (g.nextToPlay === SGFColor.BLACK) {
-                turnEl.style.color = blackStoneColor;
-            }
-            else if (g.nextToPlay === SGFColor.WHITE) {
-                turnEl.style.color = whiteStoneColor;
-            }
-        }
-        var commentsEl = document.getElementById("goban_comment");
-        console.log("draw with comment" + g.comment);
-        if (commentsEl) {
-            commentsEl.innerHTML = ((_a = g.comment) === null || _a === void 0 ? void 0 : _a.split("\n").filter(function (line) { return (line === null || line === void 0 ? void 0 : line[0]) !== "!"; }).join("<br/>")) || "";
-        }
-    };
-    Goban.prototype.drawStone = function (g, row, column) {
-        var id = "stone-".concat(row, "-").concat(column);
-        var existingDiv = document.getElementById(id);
-        var stoneDiv = existingDiv || document.createElement("div");
-        if (!existingDiv) {
-            stoneDiv.id = id;
-            stoneDiv.style.position = "absolute";
-            stoneDiv.style.textAlign = "center";
-            stoneDiv.style.left = "".concat((0.5 + column) * this.bandWitdh - 0.5 * this.stoneSide, "px");
-            stoneDiv.style.top = "".concat((0.5 + row) * this.bandWitdh - 0.5 * this.stoneSide, "px");
-            stoneDiv.style.width = "".concat(this.stoneSide, "px");
-            stoneDiv.style.height = "".concat(this.stoneSide, "px");
-            stoneDiv.onclick = function () {
-                var coord = rowColumnToCoordinate([row, column]);
-                var commentsEl = document.getElementById("goban_comment");
-                if (commentsEl) {
-                    commentsEl.innerHTML = "Position: " + coord;
-                }
-                else {
-                    alert("Location " + coord);
-                }
-            };
-            this.gobanDiv.appendChild(stoneDiv);
-        }
-        stoneDiv.innerHTML = "";
-        var coord = rowColumnToCoordinate([row, column]);
-        var stone = g.stoneAt(coord);
-        //console.log(`stone at (${row}, ${column}): ${stone}`);
-        switch (stone) {
-            case SGFColor.NONE:
-                stoneDiv.style.backgroundColor = null;
-                break;
-            case SGFColor.BLACK:
-                stoneDiv.style.backgroundColor = blackStoneColor;
-                break;
-            case SGFColor.WHITE:
-                stoneDiv.style.backgroundColor = whiteStoneColor;
-                break;
-        }
-        var label = g.labels[coord] || "";
-        if (g.triangles[coord]) {
-            label = "△";
-        }
-        if (g.squares[coord]) {
-            label = "□";
-        }
-        if (g.crosses[coord]) {
-            label = "×";
-        }
-        if (g.circles[coord]) {
-            label = "○";
-        }
-        var isLatestMove = coord == g.latestMove;
-        if (label || isLatestMove) {
-            var centerDiv = document.createElement("div");
-            if (isLatestMove) {
-                centerDiv.innerHTML = NEXT_PLAYER_LABEL;
-            }
-            else {
-                centerDiv.innerHTML = label;
-            }
-            centerDiv.style.position = "absolute";
-            switch (stone) {
-                case SGFColor.WHITE:
-                    centerDiv.style.color = blackStoneColor;
-                    break;
-                case SGFColor.BLACK:
-                    centerDiv.style.color = whiteStoneColor;
-                    break;
-                default:
-                    centerDiv.style.color = blackStoneColor;
-            }
-            centerDiv.style.left = "50%";
-            centerDiv.style.top = "50%";
-            centerDiv.style.transform = "translate(-50%, -55%)";
-            centerDiv.style.fontSize = "".concat(this.stoneSide * 0.75, "px");
-            centerDiv.style.textAlign = "center";
-            stoneDiv.appendChild(centerDiv);
-        }
-        stoneDiv.style.borderRadius = "".concat(this.stoneSide * 0.5, "px");
-    };
-    Goban.prototype.initialAnimation = function () {
-        if (this.initialSkip > 0) {
-            this.animateFromTo(200, 200, 0, this.initialSkip);
-        }
-    };
-    Goban.prototype.animate = function (initDelay, interval) {
-        this.animateFromTo(initDelay, interval / this.speedCoef, this.initialSkip);
-    };
-    Goban.prototype.animateFromTo = function (initDelay, interval, from, to) {
-        var _this = this;
-        if (from === void 0) { from = 0; }
-        this.stopAnimation();
-        var n = from;
-        to = to || 10000000;
-        this.drawBoard(n);
-        globalThis.animationTimeout = setTimeout(function () {
-            _this.drawBoard(++n);
-            if (n >= _this.positions.length - 1) {
-                return;
-            }
-            globalThis.animationInterval = setInterval(function () {
-                if (n >= to) {
-                    return;
-                }
-                _this.drawBoard(++n);
-            }, interval);
-        }, initDelay);
-    };
-    Goban.prototype.stopAnimation = function () {
-        clearTimeout(globalThis === null || globalThis === void 0 ? void 0 : globalThis.animationTimeout);
-        clearInterval(globalThis === null || globalThis === void 0 ? void 0 : globalThis.animationInterval);
-    };
-    Goban.prototype.next = function () {
-        this.stopAnimation();
-        this.drawBoard(this.position + 1);
-    };
-    Goban.prototype.previous = function () {
-        this.stopAnimation();
-        this.drawBoard(this.position - 1);
-    };
-    Goban.prototype.first = function () {
-        this.stopAnimation();
-        this.drawBoard(0);
-        this.initialAnimation();
-    };
-    Goban.prototype.last = function () {
-        this.stopAnimation();
-        this.drawBoard(this.positions.length - 1);
-    };
-    Goban.prototype.initDownloadLink = function () {
-        //document.getElementsByTagName("html")[0].innerHTML = sgf;
-        /* Doesn't work in Anki (only in the browser):
-        try {
-            var element = document.createElement('a');
-            element.innerHTML = "Download SGF";
-            element.setAttribute('href', 'data:application/x-go-sgf;charset=utf-8,' + encodeURIComponent(sgf));
-            const fileName = new Date().toJSON().replace(/[^\d]/g, "") + ".sgf";
-            element.setAttribute('download', fileName);
-
-            //element.style.display = 'none';
-            //document.body.appendChild(element);
-            //element.click();
-            //document.body.removeChild(element);
-
-            let commentsEl = document.getElementById("goban_comment");
-            commentsEl.innerHTML = "";
-            commentsEl?.appendChild(element);
-        } catch (e) {
-            console.error(e);
-        }
-        */
-        // try {
-        // 	navigator.clipboard.writeText(sgf).then(() => {
-        // 		alert("Copied to clipboard");
-        // 	}, () => {
-        // 		console.log("Can't copy to clipboard");
-        // 	});
-        // } catch (e) {
-        // 	console.error(e);
-        // }
-        var showSgfLink = document.getElementById("sgf_show");
-        if (showSgfLink) {
-            showSgfLink.onclick = this.showSgf.bind(this);
-        }
-        var editSgfLink = document.getElementById("sgf_editor");
-        if (editSgfLink) {
-            var url = 'https://tkrajina.github.io/besogo/sgf.html?sgf=' + encodeURIComponent(this.sgf.replace("FN[", "SO["));
-            editSgfLink.setAttribute('href', url);
-        }
-    };
-    Goban.prototype.showSgf = function () {
-        this.stopAnimation();
-        var commentsEl = document.getElementById("goban_comment");
-        commentsEl.innerHTML = "SGF:<br/>";
-        var textarea = document.createElement("textarea");
-        textarea.cols = 50;
-        textarea.rows = 5;
-        textarea.value = this.sgf.replace("FN[", "SO[");
-        commentsEl.appendChild(textarea);
-        textarea.select();
-    };
-    return Goban;
-}());
+var BACKGROUND_COLOR = "#ebb063";
+var AUTOPLAY_INTERVAL = 400;
 var coordinatesLetters = "abcdefghjklmnopqrst";
 var correctWords = ["correct", "točno", "+", "right"];
-function markPathsToSolution(node) {
-    node.walk(function (node, path) {
-        var _a, _b, _c;
-        if (!((_a = node.children) === null || _a === void 0 ? void 0 : _a.length)) {
-            var isSolution = false;
-            var com = node === null || node === void 0 ? void 0 : node.getComment();
-            for (var _i = 0, correctWords_1 = correctWords; _i < correctWords_1.length; _i++) {
-                var word = correctWords_1[_i];
-                if (((_c = (_b = com === null || com === void 0 ? void 0 : com.trim()) === null || _b === void 0 ? void 0 : _b.toLowerCase()) === null || _c === void 0 ? void 0 : _c.indexOf(word)) == 0) {
-                    isSolution = true;
-                    for (var _d = 0, path_1 = path; _d < path_1.length; _d++) {
-                        var e = path_1[_d];
-                        e.pathToSolution = true;
-                    }
-                }
-            }
-            if (isSolution) {
-                node.solution = true;
-            }
-            else {
-                node.failure = true;
-            }
-        }
-    });
-}
 function applyStyle(el, style) {
     if (style) {
         for (var _i = 0, _a = Object.keys(style); _i < _a.length; _i++) {
@@ -1452,6 +1078,10 @@ function applyStyle(el, style) {
             el.style[key] = style[key];
         }
     }
+}
+function getElement(prefix, id) {
+    id = prefix + "_" + id;
+    return document.getElementById(id);
 }
 function getOrCreateElement(prefix, name, id, style, innerHTML) {
     id = prefix + "_" + id;
@@ -1482,12 +1112,11 @@ var GobanViewerMode;
     GobanViewerMode["GUESS_MOVE"] = "GUESS_MOVE";
 })(GobanViewerMode || (GobanViewerMode = {}));
 var AbstractGobanViewer = /** @class */ (function () {
-    function AbstractGobanViewer(elementId, node, opts) {
-        var _this = this;
+    function AbstractGobanViewer(elementId, node) {
         this.elementId = elementId;
         var rootElement = document.getElementById(this.elementId);
         if (!rootElement) {
-            alert("no goban element found");
+            alert("no goban element found by  " + elementId);
             return;
         }
         if (!node) {
@@ -1501,24 +1130,24 @@ var AbstractGobanViewer = /** @class */ (function () {
             }
         }
         this.rootNode = node;
-        if ((opts === null || opts === void 0 ? void 0 : opts.mode) == GobanViewerMode.PROBLEM) { // TODO
-            markPathsToSolution(this.rootNode);
-        }
         this.currentNode = node;
+    }
+    AbstractGobanViewer.prototype.draw = function (opts) {
+        var _this = this;
         opts.onClick = function (row, col, color) {
             _this.onClick(row, col, color);
         };
-        this.positionViewer = new GobanPositionViewer(elementId, node, opts);
-        this.goban = new SGFGoban();
+        this.positionViewer = new GobanPositionViewer(this.elementId, this.rootNode.findPath(this.currentNode), opts);
+        this.goban = this.positionViewer.goban;
         this.updateComment();
-    }
+        this.updateNextToPlay();
+    };
     AbstractGobanViewer.prototype.updateComment = function () {
-        var _a;
-        var c = getOrCreateElement(this.elementId, "div", "comment", {});
-        if (c.created) {
-            console.warn("Comment element not found");
+        var c = getElement(this.elementId, "comment");
+        if (c) {
+            var comment = this.getCommentAndDirectives(this.currentNode).comment;
+            c.innerHTML = (comment === null || comment === void 0 ? void 0 : comment.split("\n").filter(function (line) { return (line === null || line === void 0 ? void 0 : line[0]) !== "!"; }).join("<br/>")) || "";
         }
-        c.element.innerHTML = ((_a = this.currentNode) === null || _a === void 0 ? void 0 : _a.getComment()) || "";
     };
     AbstractGobanViewer.prototype.reset = function () {
         this.goTo(this.rootNode);
@@ -1535,19 +1164,178 @@ var AbstractGobanViewer = /** @class */ (function () {
         (_a = this.goban).applyNodes.apply(_a, path);
         this.positionViewer.draw(this.goban);
         this.updateComment();
+        this.updateNextToPlay();
+    };
+    AbstractGobanViewer.prototype.updateNextToPlay = function () {
+        var turnEl = getElement(this.elementId, "turn");
+        if (turnEl) {
+            turnEl.style.backgroundColor = BACKGROUND_COLOR;
+            if (this.goban.nextToPlay === SGFColor.BLACK) {
+                turnEl.style.color = "black";
+            }
+            else if (this.goban.nextToPlay === SGFColor.WHITE) {
+                turnEl.style.color = "white";
+            }
+        }
+    };
+    AbstractGobanViewer.prototype.getPropertyOrCommandDirective = function (name, node) {
+        var directives = this.getCommentAndDirectives(node).directives;
+        if (directives[name.toUpperCase()]) {
+            return directives[name.toUpperCase()];
+        }
+        return node.getProperty(name.toUpperCase());
+    };
+    AbstractGobanViewer.prototype.getCommentAndDirectives = function (node) {
+        var commentCleaned = [];
+        var directives = {};
+        var comments = node.getProperties(Tag.Comment);
+        if ((comments === null || comments === void 0 ? void 0 : comments.length) > 0) {
+            for (var _i = 0, comments_1 = comments; _i < comments_1.length; _i++) {
+                var comment = comments_1[_i];
+                console.log("comment:" + comment);
+                for (var _a = 0, _b = comment.split("\n"); _a < _b.length; _a++) {
+                    var line = _b[_a];
+                    line = line.trim();
+                    console.log("line:" + line);
+                    if ((line === null || line === void 0 ? void 0 : line[0]) === "!") {
+                        line = line.substring(1);
+                        var parts = line.split(/\s+/);
+                        var key = parts.shift().toUpperCase();
+                        var val = parts.join(" ").trim();
+                        directives[key] = val || "true";
+                    }
+                    else {
+                        commentCleaned.push(line);
+                    }
+                }
+            }
+        }
+        return { comment: commentCleaned.join("\n"), directives: directives };
     };
     return AbstractGobanViewer;
 }());
 var ProblemGobanViewer = /** @class */ (function (_super) {
     __extends(ProblemGobanViewer, _super);
     function ProblemGobanViewer(elementId, node, opts) {
-        var _this = _super.call(this, elementId, node, opts) || this;
+        var _this = this;
+        var _a;
+        _this = _super.call(this, elementId, node) || this;
+        _this.initialSkip = 0;
         _this.showSolution = false;
         _this.autoPlayColor = undefined;
-        _this.markSolutions();
+        _this.animationSpeed = 1;
+        _this.solutionPathLengths = [];
+        _this.opts = opts || {};
+        _this.parseDirectives();
+        if (_this.initialSkip > 0) {
+            var goban = new SGFGoban();
+            var tmpNode = _this.rootNode;
+            for (var i = 0; i < _this.initialSkip; i++) {
+                goban.applyNodes(tmpNode);
+                tmpNode = (_a = tmpNode.children) === null || _a === void 0 ? void 0 : _a[0];
+            }
+            _this.rootNode = _this.rootNode.flattenToNode(tmpNode);
+            _this.rootNode.children = tmpNode.children;
+            _this.currentNode = _this.rootNode;
+        }
+        _this.fillSolutionsMetadata(_this.rootNode);
+        var color = _this.rootNode.playerAndCoordinates()[0];
+        _this.autoPlayColor = color;
+        _super.prototype.draw.call(_this, __assign({ mode: GobanViewerMode.PROBLEM }, _this.opts));
         return _this;
     }
     ;
+    ProblemGobanViewer.prototype.resetAnimation = function () {
+        clearInterval(this.autoPlayTimeout);
+        clearTimeout(this.autoPlayTimeout);
+        this.autoPlayTimeout = null;
+    };
+    ProblemGobanViewer.prototype.parseDirectives = function () {
+        for (var _i = 0, _a = this.rootNode.mainLine(); _i < _a.length; _i++) {
+            var node = _a[_i];
+            var crop = this.getPropertyOrCommandDirective("crop", node);
+            if (crop) {
+                if (crop == "auto" || crop == "square") {
+                    this.opts.crop = crop;
+                }
+                else {
+                    var parts = crop.trim().split(/[\s,]+/) || ["0", "0", "0", "0"];
+                    var cropTop = parseFloat(parts[0]) || 0;
+                    var cropRight = parseFloat(parts[1]) || 0;
+                    var cropBottom = parseFloat(parts[2]) || 0;
+                    var cropLeft = parseFloat(parts[3]) || 0;
+                    this.opts.crop = [cropTop, cropRight, cropBottom, cropLeft];
+                }
+            }
+            var speed = this.getPropertyOrCommandDirective("speed", node);
+            if (speed) {
+                var s = parseFloat(speed);
+                this.opts.animationSpeed = !s || isNaN(s) ? 1 : s;
+                this.animationSpeed = this.opts.animationSpeed;
+            }
+            var start = this.getPropertyOrCommandDirective("start", node);
+            var skip = this.getPropertyOrCommandDirective("skip", node);
+            if (skip) {
+                this.initialSkip = parseInt(skip) || 0;
+                console.log("skip ".concat(skip, " => ").concat(this.initialSkip, " moves"));
+            }
+            var anki = this.getPropertyOrCommandDirective("anki", node);
+            if (anki) {
+                var mainLine = this.rootNode.mainLine();
+                var n = mainLine.length;
+                var ankiFrom = parseInt(anki);
+                if (!isNaN(ankiFrom)) {
+                    if (ankiFrom > 0) {
+                        ankiFrom = -ankiFrom;
+                    }
+                    this.initialSkip = n + ankiFrom - 1;
+                    console.log("(anki) skip ".concat(anki, " => ").concat(this.initialSkip, " moves"));
+                }
+            }
+            console.log("crop=".concat(crop, ", speed=").concat(speed, ", start=").concat(start, ", skip=").concat(skip, ", anki=").concat(anki));
+        }
+    };
+    ProblemGobanViewer.prototype.fillSolutionsMetadata = function (node) {
+        var _this = this;
+        var solutionFound = 0;
+        this.solutionPathLengths = [];
+        node.walk(function (node, path) {
+            var _a, _b, _c;
+            if (!((_a = node.children) === null || _a === void 0 ? void 0 : _a.length)) {
+                var isSolution = false;
+                var com = node === null || node === void 0 ? void 0 : node.getComment();
+                for (var _i = 0, correctWords_1 = correctWords; _i < correctWords_1.length; _i++) {
+                    var word = correctWords_1[_i];
+                    if (((_c = (_b = com === null || com === void 0 ? void 0 : com.trim()) === null || _b === void 0 ? void 0 : _b.toLowerCase()) === null || _c === void 0 ? void 0 : _c.indexOf(word)) == 0) {
+                        isSolution = true;
+                        for (var _d = 0, path_3 = path; _d < path_3.length; _d++) {
+                            var e = path_3[_d];
+                            e.pathToSolution = true;
+                            solutionFound++;
+                        }
+                    }
+                }
+                if (isSolution) {
+                    node.solution = true;
+                    _this.solutionPathLengths.push(path.length);
+                    solutionFound++;
+                }
+                else {
+                    node.failure = true;
+                }
+            }
+        });
+        if (!solutionFound) {
+            console.log("Solution is not specified in the SGF => assume main line is solution");
+            var path = this.rootNode.mainLine();
+            for (var _i = 0, path_2 = path; _i < path_2.length; _i++) {
+                node = path_2[_i];
+                node.pathToSolution = true;
+            }
+            path[path.length - 1].solution = true;
+            this.solutionPathLengths.push(path.length);
+        }
+    };
     ProblemGobanViewer.prototype.reset = function () {
         this.positionViewer.setBgLabel("");
         _super.prototype.reset.call(this);
@@ -1562,12 +1350,14 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         }
     };
     ProblemGobanViewer.prototype.goTo = function (node) {
+        var _a, _b;
         _super.prototype.goTo.call(this, node);
         if (node === null || node === void 0 ? void 0 : node.solution) {
-            this.positionViewer.setBgLabel("✓", "green");
+            this.positionViewer.setBgLabel("✓", "green", { opacity: 0.6 });
+            (_b = (_a = this.opts) === null || _a === void 0 ? void 0 : _a.onCorrect) === null || _b === void 0 ? void 0 : _b.call(_a, this.currentNode);
         }
         else if (node === null || node === void 0 ? void 0 : node.failure) {
-            this.positionViewer.setBgLabel("✗", "red");
+            this.positionViewer.setBgLabel("✗", "red", { opacity: 0.6 });
         }
         else if (node === null || node === void 0 ? void 0 : node.offPath) {
             this.positionViewer.setBgLabel("?", "gray", { opacity: 0.25 });
@@ -1582,10 +1372,10 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
                 var _b = subnode.playerAndCoordinates(), color = _b[0], coords = _b[1];
                 var _c = coordinateToRowColumn(coords), row = _c[0], col = _c[1];
                 if ((subnode === null || subnode === void 0 ? void 0 : subnode.pathToSolution) || (subnode === null || subnode === void 0 ? void 0 : subnode.solution)) {
-                    this.positionViewer.drawLabel(row, col, "✓", { color: "green" });
+                    this.positionViewer.drawLabel(row, col, "✓", { color: "green", fontScale: .9 });
                 }
                 else {
-                    this.positionViewer.drawLabel(row, col, "✗", { color: "red" });
+                    this.positionViewer.drawLabel(row, col, "✗", { color: "red", fontScale: .9 });
                 }
             }
         }
@@ -1656,8 +1446,10 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
         }
         this.goTo(node);
     };
-    ProblemGobanViewer.prototype.animate = function (nodes) {
+    ProblemGobanViewer.prototype.animate = function (nodes, interval) {
         var _this = this;
+        if (interval === void 0) { interval = AUTOPLAY_INTERVAL; }
+        this.resetAnimation();
         if (this.autoPlayTimeout) {
             return;
         }
@@ -1668,12 +1460,14 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
                 i++;
                 if (i >= nodes.length) {
                     clearInterval(this.autoPlayTimeout);
+                    this.autoPlayTimeout = null;
                 }
                 return [2 /*return*/];
             });
-        }); }, 500);
+        }); }, interval / this.animationSpeed);
     };
-    ProblemGobanViewer.prototype.animateSolution = function () {
+    ProblemGobanViewer.prototype.animateSolution = function (interval) {
+        if (interval === void 0) { interval = AUTOPLAY_INTERVAL; }
         var firstSolution;
         this.rootNode.walkUntil(function (node, path) {
             if (node === null || node === void 0 ? void 0 : node.solution) {
@@ -1683,7 +1477,7 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
             return false;
         });
         if (firstSolution) {
-            this.animate(firstSolution);
+            this.animate(firstSolution, interval);
         }
     };
     ProblemGobanViewer.prototype.previous = function () {
@@ -1700,7 +1494,7 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
     return ProblemGobanViewer;
 }(AbstractGobanViewer));
 var GobanPositionViewer = /** @class */ (function () {
-    function GobanPositionViewer(elementId, node, opts) {
+    function GobanPositionViewer(elementId, nodeOrNodes, opts) {
         this.elementId = elementId;
         this.size = 19;
         /** Side of the goban including the cropped parts */
@@ -1713,6 +1507,16 @@ var GobanPositionViewer = /** @class */ (function () {
         /** Elements to be deleted before every position change */
         this.temporaryElements = [];
         this.coordinates = false;
+        var node;
+        var nodes;
+        if (nodeOrNodes.pop) {
+            nodes = nodeOrNodes;
+            node = nodes[0];
+        }
+        else {
+            node = nodeOrNodes;
+            nodes = [node];
+        }
         this.idPrefix = elementId;
         this.width = (opts === null || opts === void 0 ? void 0 : opts.side) || 80;
         this.originalWidth = this.width;
@@ -1721,7 +1525,9 @@ var GobanPositionViewer = /** @class */ (function () {
         if (opts === null || opts === void 0 ? void 0 : opts.crop) {
             if (opts.crop == "auto" || opts.crop == "square") {
                 var bounds = node.bounds();
+                // alert(JSON.stringify(bounds))
                 bounds.increase(this.size, 2, 6);
+                // alert(JSON.stringify(bounds))
                 if (opts.crop == "square") {
                     bounds.makeSquare(this.size);
                 }
@@ -1753,7 +1559,7 @@ var GobanPositionViewer = /** @class */ (function () {
         this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
         this.drawGoban();
         var goban = new SGFGoban();
-        goban.applyNodes(node);
+        goban.applyNodes.apply(goban, nodes);
         this.draw(goban);
     }
     GobanPositionViewer.prototype.cropFactor = function (cropFactor) {
@@ -1761,9 +1567,9 @@ var GobanPositionViewer = /** @class */ (function () {
             return 0;
         }
         if (cropFactor >= 1) {
-            var res_2 = cropFactor / this.size; // - 0.25 / this.size;
-            console.log("".concat(cropFactor, " -> ").concat(res_2));
-            return res_2;
+            var res_1 = cropFactor / this.size; // - 0.25 / this.size;
+            console.log("".concat(cropFactor, " -> ").concat(res_1));
+            return res_1;
         }
         var res = Math.round(this.size * cropFactor) / this.size; // - .25 / this.size;
         console.log("".concat(cropFactor, " -> ").concat(res));
@@ -1782,7 +1588,7 @@ var GobanPositionViewer = /** @class */ (function () {
         var h = (this.coordinates ? 2 * this.bandWidth : 0) + this.gobanHeight();
         var withCoordinatesDiv = getOrCreateElement(this.idPrefix, "div", "goban-coordinates", {
             overflow: "hidden",
-            backgroundColor: "#ebb063",
+            backgroundColor: BACKGROUND_COLOR,
             position: "relative",
             width: "".concat(w).concat(this.unit),
             height: "".concat(h).concat(this.unit),
@@ -1844,7 +1650,6 @@ var GobanPositionViewer = /** @class */ (function () {
                 top: "".concat(this.width * index / this.size + this.bandWidth / 2.).concat(this.unit),
                 backgroundColor: "black"
             }).element);
-            // <div style={{}} />
         }
         this.drawHoshi();
         if (this.coordinates) {
@@ -1912,8 +1717,8 @@ var GobanPositionViewer = /** @class */ (function () {
                 ];
                 break;
         }
-        for (var _i = 0, hoshiPositions_2 = hoshiPositions; _i < hoshiPositions_2.length; _i++) {
-            var pos = hoshiPositions_2[_i];
+        for (var _i = 0, hoshiPositions_1 = hoshiPositions; _i < hoshiPositions_1.length; _i++) {
+            var pos = hoshiPositions_1[_i];
             this.drawIntersectionDot("hoshi", pos[0], pos[1], { opacity: 1, radious: this.bandWidth / 5, color: "black" });
         }
     };
@@ -1946,9 +1751,21 @@ var GobanPositionViewer = /** @class */ (function () {
             var _a;
             if (_this.mouseOverRow !== undefined && _this.mouseOverCol !== undefined) {
                 (_a = _this === null || _this === void 0 ? void 0 : _this.onClick) === null || _a === void 0 ? void 0 : _a.call(_this, _this.mouseOverRow, _this.mouseOverCol, _this.goban.nextToPlay);
+                _this.showCoordinate();
             }
         };
         return div;
+    };
+    GobanPositionViewer.prototype.showCoordinate = function () {
+        clearTimeout(this.coordinateTimeout);
+        var el = getElement(this.elementId, "coordinate_clicked");
+        if (el) {
+            var coord = rowColumnToCoordinate([this.mouseOverRow, this.mouseOverCol]);
+            el.innerHTML = "".concat(coordinatesLetters.charAt(this.mouseOverCol).toUpperCase()).concat(this.size - this.mouseOverRow, " / ").concat(coord);
+        }
+        this.coordinateTimeout = setTimeout(function () {
+            el.innerHTML = "";
+        }, 1000);
     };
     GobanPositionViewer.prototype.draw = function (goban) {
         for (var _i = 0, _a = this.temporaryElements; _i < _a.length; _i++) {
@@ -1973,10 +1790,6 @@ var GobanPositionViewer = /** @class */ (function () {
                 color: this.goban.stoneAt(this.goban.latestMove) == SGFColor.BLACK ? "white" : "black",
                 radious: this.bandWidth / 3,
             }));
-        }
-        for (var rowNo in this.goban.goban) {
-            for (var colNo in this.goban.goban[rowNo]) {
-            }
         }
         for (var coord in this.goban.labels) {
             var _c = coordinateToRowColumn(coord), row = _c[0], col = _c[1];
@@ -2003,15 +1816,6 @@ var GobanPositionViewer = /** @class */ (function () {
             var color = this.goban.stoneAt(coord) == SGFColor.BLACK ? "white" : "black";
             this.drawLabel(row, col, "○", { color: color });
         }
-        /*
-    return <div style={{}}>
-        <div ref={playableRef} id="goban" style={{position: "absolute", top: `${emptyBorder / 2}${unit}`, left: `${emptyBorder / 2}${unit}`, width: `${playableSide}${unit}`, height: `${playableSide}${unit}`}} onMouseMove={logCoordinates} onClick={logCoordinates} onMouseLeave={clearTmpStone} onMouseUp={onClick}>
-            {!!(tmpStone && nextColor) && <Stone row={tmpStone[0]} column={tmpStone[1]} color={nextColor} bandWidth={bandWidth} unit={unit} opacity={0.25} />}
-            {props.emptyIntersections && <EmptyIntersections bandWidth={bandWidth} margins={props.emptyIntersections} goban={props.goban} unit={props.unit} />}
-            {props.invalidIntersections?.map((coords) => <IntersectionDot row={coords[0]} column={coords[1]} bandWidth={bandWidth} unit={props.unit} radious={bandWidth / 3} opacity={0.25} color="red" />)}
-        </div>
-    </div>
-        */
     };
     GobanPositionViewer.prototype.getStoneElement = function (row, col) {
         return document.getElementById("".concat(this.idPrefix, "_stone-").concat(row, "-").concat(col));
@@ -2109,19 +1913,19 @@ var GobanPositionViewer = /** @class */ (function () {
             visibility: "hidden",
         });
     };
-    GobanPositionViewer.prototype.drawLabel = function (row, column, label, props) {
+    GobanPositionViewer.prototype.drawLabel = function (row, column, label, opts) {
         this.drawStone(row, column);
         console.log("Label ".concat(label, " on ").concat(row, ",").concat(column));
         var stoneDiv = this.getStoneElement(row, column);
         var div = getOrCreateElement(this.idPrefix, "div", "label-".concat(row, "-").concat(column), {
-            color: props.color,
+            color: opts.color,
             display: "flex",
             alignSelf: "center",
             justifySelf: "center",
             textAlign: "center",
             flexGrow: "1",
             justifyContent: "center",
-            fontSize: "".concat(this.bandWidth * 0.6).concat(this.unit)
+            fontSize: "".concat(this.bandWidth * ((opts === null || opts === void 0 ? void 0 : opts.fontScale) || 0.6)).concat(this.unit)
         }).element;
         div.innerHTML = label;
         stoneDiv.appendChild(div);
@@ -2129,166 +1933,3 @@ var GobanPositionViewer = /** @class */ (function () {
     };
     return GobanPositionViewer;
 }());
-/*
-
-interface GobanProps {
-    size: number;
-    width?: number;
-    unit?: string;
-    goban: SGFGoban;
-    emptyIntersections?: number[];
-    invalidIntersections?: number[][];
-    onClick?: (row: number, col: number) => void;
-    markLastMove?: boolean;
-}
-
-export function Goban(props: GobanProps) {
-    const playableRef = useRef<HTMLDivElement>();
-    const side = props.width || 100;
-    const emptyBorder = .5 * props.width / props.size;
-    const playableSide = side - emptyBorder;
-    const bandWidth = playableSide / props.size;
-    const unit = props.unit || "vmin";
-    const [tmpStone, setTmpStone] = useState(undefined as undefined | [number, number]);
-    const goban = useRef(props.goban);
-    if (goban.current != props.goban) {
-        setTmpStone(undefined);
-    }
-
-    const getRowCol = (e: MouseEvent) => {
-        const rect = playableRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left; //x position within the element.
-        const y = e.clientY - rect.top;  //y position within the element.
-        const row = Math.floor(props.size * y / rect.height);
-        const col = Math.floor(props.size * x / rect.width);
-        return [row, col];
-    }
-
-    const logCoordinates = (e: MouseEvent) => {
-        e.preventDefault();
-        let [row, col] = getRowCol(e);
-        // console.log(`client: ${e.clientX},${e.clientY}, rect: ${rect.left},${rect.top} => ${x},${y} => ${x / rect.width},${y / rect.height} => ${row},${col}`)
-        console.log(`Setting stone at ${row},${col}`)
-        if (props.goban.isStoneAt(rowColumnToCoordinate([row, col]))) {
-            setTmpStone(undefined);
-        } else {
-            setTmpStone([row, col]);
-        }
-    }
-
-    const onClick = (e: MouseEvent) => {
-        e.preventDefault();
-        let [row, col] = getRowCol(e);
-        props?.onClick(row, col);
-        setTmpStone(undefined);
-    }
-
-    const clearTmpStone = (e: MouseEvent) => {
-        e.preventDefault();
-        console.log("Clearing stone?")
-        console.log(e.relatedTarget)
-        if (e.relatedTarget != playableRef.current) {
-            console.log("Clearing stone!")
-            setTmpStone(undefined);
-        }
-    }
-
-    let nextColor: string;
-    if (props.goban.nextToPlay == SGFColor.WHITE) {
-        nextColor = "white";
-    } else if (props.goban.nextToPlay == SGFColor.BLACK) {
-        nextColor = "black";
-    }
-
-    return <div style={{width: `${side}${unit}`, height: `${side}${unit}`, backgroundColor: "orange", position: "relative", margin: "0 auto 0 auto"}}>
-        <div ref={playableRef} id="goban" style={{position: "absolute", top: `${emptyBorder / 2}${unit}`, left: `${emptyBorder / 2}${unit}`, width: `${playableSide}${unit}`, height: `${playableSide}${unit}`}} onMouseMove={logCoordinates} onClick={logCoordinates} onMouseLeave={clearTmpStone} onMouseUp={onClick}>
-            {Array.from(Array(props.size)).map((_, index) => <Fragment>
-                <div style={{position: "absolute", height: `${playableSide - bandWidth}${unit}`, width: "0.5px", color: "black", top: `${bandWidth / 2}${unit}`, left: `${playableSide * index / props.size + bandWidth / 2.}${unit}`, backgroundColor: "black"}} />
-                <div style={{position: "absolute", width: `${playableSide - bandWidth}${unit}`, height: "0.5px", color: "black", left: `${bandWidth / 2}${unit}`, top: `${playableSide * index / props.size + bandWidth / 2.}${unit}`, backgroundColor: "black"}} />
-            </Fragment>)}
-            {props.goban.goban.map((row, rowNo) => row.map((color, columnNo) => {
-                switch (color) {
-                    case SGFColor.BLACK:
-                        return <Stone row={rowNo} column={columnNo} bandWidth={bandWidth} unit={unit} color={"black"}/>
-                    case SGFColor.WHITE:
-                        return <Stone row={rowNo} column={columnNo} bandWidth={bandWidth} unit={unit} color={"white"}/>
-                }
-            }
-            ))}
-            {(props.markLastMove && props.goban.latestMove) &&
-                <IntersectionDot radious={bandWidth / 3} row={coordinateToRowColumn(props.goban.latestMove)?.[0]} column={coordinateToRowColumn(props.goban.latestMove)?.[1]} color={props.goban.stoneAt(props.goban.latestMove) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} />}
-            {props.goban.labels && Object.keys(props.goban.labels)?.map(coordinate => {
-                const rowCol = coordinateToRowColumn(coordinate)
-                return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label={props.goban.labels[coordinate]} />}
-            )}
-            {props.goban.triangles && Object.keys(props.goban.triangles)?.map(coordinate => {
-                const rowCol = coordinateToRowColumn(coordinate)
-                return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="△" />}
-            )}
-            {props.goban.squares && Object.keys(props.goban.squares)?.map(coordinate => {
-                const rowCol = coordinateToRowColumn(coordinate)
-                return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="□" />}
-            )}
-            {props.goban.crosses && Object.keys(props.goban.crosses)?.map(coordinate => {
-                const rowCol = coordinateToRowColumn(coordinate)
-                return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="×" />}
-            )}
-            {props.goban.circles && Object.keys(props.goban.circles)?.map(coordinate => {
-                const rowCol = coordinateToRowColumn(coordinate)
-                return <Label row={rowCol[0]} column={rowCol[1]} color={props.goban.stoneAt(coordinate) == SGFColor.BLACK ? "white" : "black"} bandWidth={bandWidth} unit={unit} label="○" />}
-            )}
-            {!!(tmpStone && nextColor) && <Stone row={tmpStone[0]} column={tmpStone[1]} color={nextColor} bandWidth={bandWidth} unit={unit} opacity={0.25} />}
-            {props.emptyIntersections && <EmptyIntersections bandWidth={bandWidth} margins={props.emptyIntersections} goban={props.goban} unit={props.unit} />}
-            {props.invalidIntersections?.map((coords) => <IntersectionDot row={coords[0]} column={coords[1]} bandWidth={bandWidth} unit={props.unit} radious={bandWidth / 3} opacity={0.25} color="red" />)}
-        </div>
-    </div>
-}
-
-function EmptyIntersections(props: {margins?: number[], goban: SGFGoban, bandWidth: number, unit: string, color?: string}) {
-    if (!props.margins) {
-        return null;
-    }
-    let [top, right, bottom, left] = props.margins;
-    console.log(`${top} ${right} ${bottom} ${left}`)
-    if (top + bottom >= props.goban.size) {
-        return null;
-    }
-    if (left + right >= props.goban.size) {
-        return null;
-    }
-    return <Fragment>
-        {Array(props.goban.size).fill(undefined).map((_, row) => Array(props.goban.size).fill(undefined).map((_, col) => {
-            if (col >= left && col < props.goban.size - right && row >= top && row < props.goban.size - bottom) {
-                const stone = props.goban.stoneAt(rowColumnToCoordinate([row, col]));
-                if (stone != SGFColor.BLACK && stone != SGFColor.WHITE) {
-                    return <IntersectionDot row={row} column={col} bandWidth={props.bandWidth} unit={props.unit} radious={props.bandWidth / 3} opacity={0.25} color={props.color} />
-                }
-                return null;
-            }
-        }))}
-    </Fragment>
-}
-
-function Hoshi(props: {goban: SGFGoban, bandWidth: number, unit: string}) {
-}
-
-function IntersectionDot(props: {row: number, column: number, bandWidth: number, unit: string, radious: number, opacity?: number, color?: string}) {
-    return <div style={{justifyContent: "center", alignContent: "center", display: "flex", flexDirection: "row", position: "absolute", width: `${props.bandWidth}${props.unit}`, height: `${props.bandWidth}${props.unit}`, top: `${props.row * props.bandWidth}${props.unit}`, left: `${props.column * props.bandWidth}${props.unit}`}}>
-        <div style={{opacity: props.opacity ? props.opacity : 1, backgroundColor: props.color ? props.color : "black", borderRadius: `${props.radious}${props.unit}`, alignSelf: "center", justifySelf: "center", justifyContent: "center", width: `${props.radious}${props.unit}`, height: `${props.radious}${props.unit}` }}>
-        </div>
-    </div>
-}
-
-function Label(props: {row: number, column: number, bandWidth: number, unit: string, color: string, label: string}) {
-    return <div style={{display: "flex", flexDirection: "row", position: "absolute", width: `${props.bandWidth}${props.unit}`, height: `${props.bandWidth}${props.unit}`, top: `${props.row * props.bandWidth}${props.unit}`, left: `${props.column * props.bandWidth}${props.unit}`}}>
-        <div style={{color: props.color, display: "flex", alignSelf: "center", justifySelf: "center", textAlign: "center", flexGrow: 1, justifyContent: "center", fontSize: `${props.bandWidth * 0.9}${props.unit}`}}>
-            {props.label}
-        </div>
-    </div>
-}
-
-function Stone(props: {row: number, column: number, bandWidth: number, unit: string, color: string, opacity?: number}) {
-    return <div style={{display: "flex", justifyContent: "center", alignContent: "center", opacity: props?.opacity ? props.opacity : undefined, position: "absolute", borderRadius: `${props.bandWidth / 1}${props.unit}`, backgroundColor: props.color, width: `${props.bandWidth}${props.unit}`, height: `${props.bandWidth}${props.unit}`, top: `${props.row * props.bandWidth}${props.unit}`, left: `${props.column * props.bandWidth}${props.unit}`}}>
-    </div>
-}
-*/
