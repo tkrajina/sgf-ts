@@ -930,15 +930,18 @@ class GobanPositionViewer {
 		this.drawStone(row, column);
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneDiv = this.getStoneElement(row, column);
+		const stone = this.goban.stoneAt(rowColumnToCoordinate([row, column]));
 		const div = getOrCreateElement(this.idPrefix, "div", `label-${row}-${column}`, {
 			color: opts.color,
+			backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : null,
 			display: "flex",
 			alignSelf: "center",
 			justifySelf: "center",
 			textAlign: "center",
 			flexGrow: "1",
 			justifyContent: "center",
-			fontSize: `${this.bandWidth * (opts?.fontScale || 0.6)}${this.unit}`
+			fontSize: `${this.bandWidth * (opts?.fontScale || 0.8)}${this.unit}`,
+			fontWeight: "bold"
 		}).element
 		div.innerHTML = label;
 		stoneDiv.appendChild(div);

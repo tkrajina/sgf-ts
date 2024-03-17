@@ -1917,15 +1917,18 @@ var GobanPositionViewer = /** @class */ (function () {
         this.drawStone(row, column);
         console.log("Label ".concat(label, " on ").concat(row, ",").concat(column));
         var stoneDiv = this.getStoneElement(row, column);
+        var stone = this.goban.stoneAt(rowColumnToCoordinate([row, column]));
         var div = getOrCreateElement(this.idPrefix, "div", "label-".concat(row, "-").concat(column), {
             color: opts.color,
+            backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : null,
             display: "flex",
             alignSelf: "center",
             justifySelf: "center",
             textAlign: "center",
             flexGrow: "1",
             justifyContent: "center",
-            fontSize: "".concat(this.bandWidth * ((opts === null || opts === void 0 ? void 0 : opts.fontScale) || 0.6)).concat(this.unit)
+            fontSize: "".concat(this.bandWidth * ((opts === null || opts === void 0 ? void 0 : opts.fontScale) || 0.8)).concat(this.unit),
+            fontWeight: "bold"
         }).element;
         div.innerHTML = label;
         stoneDiv.appendChild(div);
