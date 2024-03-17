@@ -1032,7 +1032,7 @@ var SGFGoban = /** @class */ (function (_super) {
         if (coords) {
             var existingStone = this.stoneAt(coords);
             if (existingStone == SGFColor.BLACK || existingStone == SGFColor.WHITE) {
-                throw new Error("Already taken");
+                throw new Error("Already taken: ".concat(coords));
             }
         }
         var player = node.getProperty(Tag.Player);

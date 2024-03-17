@@ -247,7 +247,7 @@ export class SGFGoban extends GobanPosition {
 		if (coords) {
 			const existingStone = this.stoneAt(coords)
 			if (existingStone == SGFColor.BLACK || existingStone == SGFColor.WHITE) {
-				throw new Error("Already taken");
+				throw new Error(`Already taken: ${coords}`);
 			}
 		}
 
