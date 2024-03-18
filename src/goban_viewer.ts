@@ -931,6 +931,7 @@ class GobanPositionViewer {
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneDiv = this.getStoneElement(row, column);
 		const stone = this.goban.stoneAt(rowColumnToCoordinate([row, column]));
+		let defaultStoneSide = label.length <= 1 ? 0.9 : 0.5;
 		const div = getOrCreateElement(this.idPrefix, "div", `label-${row}-${column}`, {
 			color: opts.color,
 			backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : null,
@@ -938,12 +939,20 @@ class GobanPositionViewer {
 			alignSelf: "center",
 			justifySelf: "center",
 			textAlign: "center",
-			flexGrow: "1",
-			justifyContent: "center",
-			fontSize: `${this.bandWidth * (opts?.fontScale || 0.8)}${this.unit}`,
-			fontWeight: "bold"
+			width: `${this.bandWidth}${this.unit}`,
+			height: `${this.bandWidth}${this.unit}`,
 		}).element
-		div.innerHTML = label;
+		const textDiv = getOrCreateElement(this.idPrefix, "span", `label-div-${row}-${column}`, {
+			flexGrow: "1",
+			display: "flex",
+			alignSelf: "center",
+			justifySelf: "center",
+			justifyContent: "center",
+			fontSize: `${this.bandWidth * (opts?.fontScale || defaultStoneSide)}${this.unit}`,
+			fontWeight: "bold",
+		})
+		textDiv.element.innerHTML = label;
+		div.appendChild(textDiv.element);
 		stoneDiv.appendChild(div);
 		this.temporaryElements.push(div);
 	}

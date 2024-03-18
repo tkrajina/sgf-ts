@@ -1918,6 +1918,7 @@ var GobanPositionViewer = /** @class */ (function () {
         console.log("Label ".concat(label, " on ").concat(row, ",").concat(column));
         var stoneDiv = this.getStoneElement(row, column);
         var stone = this.goban.stoneAt(rowColumnToCoordinate([row, column]));
+        var defaultStoneSide = label.length <= 1 ? 0.9 : 0.5;
         var div = getOrCreateElement(this.idPrefix, "div", "label-".concat(row, "-").concat(column), {
             color: opts.color,
             backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : null,
@@ -1925,12 +1926,20 @@ var GobanPositionViewer = /** @class */ (function () {
             alignSelf: "center",
             justifySelf: "center",
             textAlign: "center",
-            flexGrow: "1",
-            justifyContent: "center",
-            fontSize: "".concat(this.bandWidth * ((opts === null || opts === void 0 ? void 0 : opts.fontScale) || 0.8)).concat(this.unit),
-            fontWeight: "bold"
+            width: "".concat(this.bandWidth).concat(this.unit),
+            height: "".concat(this.bandWidth).concat(this.unit),
         }).element;
-        div.innerHTML = label;
+        var textDiv = getOrCreateElement(this.idPrefix, "span", "label-div-".concat(row, "-").concat(column), {
+            flexGrow: "1",
+            display: "flex",
+            alignSelf: "center",
+            justifySelf: "center",
+            justifyContent: "center",
+            fontSize: "".concat(this.bandWidth * ((opts === null || opts === void 0 ? void 0 : opts.fontScale) || defaultStoneSide)).concat(this.unit),
+            fontWeight: "bold",
+        });
+        textDiv.element.innerHTML = label;
+        div.appendChild(textDiv.element);
         stoneDiv.appendChild(div);
         this.temporaryElements.push(div);
     };
