@@ -505,6 +505,7 @@ class GobanPositionViewer {
 		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
 		this.rootElement = document.getElementById(this.elementId);
+		this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
 		if (opts?.crop) {
 			if (opts.crop == "auto" || opts.crop == "square") {
 				const bounds = node.bounds();
@@ -538,7 +539,6 @@ class GobanPositionViewer {
 			alert("no goban element found");
 			return;
 		}
-		this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
 		this.drawGoban();
 		const goban = new SGFGoban();
 		goban.applyNodes(...nodes);

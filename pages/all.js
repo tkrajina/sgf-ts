@@ -1522,6 +1522,7 @@ var GobanPositionViewer = /** @class */ (function () {
         this.originalWidth = this.width;
         this.unit = (opts === null || opts === void 0 ? void 0 : opts.unit) || "vmin";
         this.rootElement = document.getElementById(this.elementId);
+        this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
         if (opts === null || opts === void 0 ? void 0 : opts.crop) {
             if (opts.crop == "auto" || opts.crop == "square") {
                 var bounds = node.bounds();
@@ -1556,7 +1557,6 @@ var GobanPositionViewer = /** @class */ (function () {
             alert("no goban element found");
             return;
         }
-        this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
         this.drawGoban();
         var goban = new SGFGoban();
         goban.applyNodes.apply(goban, nodes);
