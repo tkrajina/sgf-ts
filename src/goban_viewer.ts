@@ -508,7 +508,7 @@ class GobanPositionViewer {
 		this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
 		if (opts?.crop) {
 			if (opts.crop == "auto" || opts.crop == "square") {
-				const bounds = node.bounds();
+				const bounds = node.bounds({includeNonStones: true});
 				// alert(JSON.stringify(bounds))
 				bounds.increase(this.size, 2, 6);
 				// alert(JSON.stringify(bounds))

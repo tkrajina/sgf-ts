@@ -322,7 +322,7 @@ export class SGFNode {
 		return null;
 	}
 
-	bounds() {
+	bounds(opts?: {includeNonStones: boolean}) {
 		const bounds = new Bounds();
 		this.walk((node: SGFNode, path: SGFNode[]) => {
 			const takenCoords = [];
@@ -334,6 +334,15 @@ export class SGFNode {
 			}
 			takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.Black)))
 			takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.White)))
+			if (opts?.includeNonStones) {
+				for (const e of node.getLabels() || []) {
+					takenCoords.push(...expandCoordinatesRange(e.coord));
+				}
+				takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.Triangle)));
+				takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.Circle)));
+				takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.Square)));
+				takenCoords.push(...expandCoordinatesRange(node.getProperty(Tag.X)));
+			}
 			for (const coord of takenCoords) {
 				let [row, col] = coordinateToRowColumn(coord)
 				console.log(`${coord} => row=${row}, col=${col}`);

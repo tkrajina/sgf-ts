@@ -399,7 +399,7 @@ var SGFNode = /** @class */ (function () {
         }
         return null;
     };
-    SGFNode.prototype.bounds = function () {
+    SGFNode.prototype.bounds = function (opts) {
         var bounds = new Bounds();
         this.walk(function (node, path) {
             var takenCoords = [];
@@ -413,9 +413,19 @@ var SGFNode = /** @class */ (function () {
             }
             takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.Black)));
             takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.White)));
-            for (var _d = 0, takenCoords_1 = takenCoords; _d < takenCoords_1.length; _d++) {
-                var coord = takenCoords_1[_d];
-                var _e = coordinateToRowColumn(coord), row = _e[0], col = _e[1];
+            if (opts === null || opts === void 0 ? void 0 : opts.includeNonStones) {
+                for (var _d = 0, _e = node.getLabels() || []; _d < _e.length; _d++) {
+                    var e = _e[_d];
+                    takenCoords.push.apply(takenCoords, expandCoordinatesRange(e.coord));
+                }
+                takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.Triangle)));
+                takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.Circle)));
+                takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.Square)));
+                takenCoords.push.apply(takenCoords, expandCoordinatesRange(node.getProperty(Tag.X)));
+            }
+            for (var _f = 0, takenCoords_1 = takenCoords; _f < takenCoords_1.length; _f++) {
+                var coord = takenCoords_1[_f];
+                var _g = coordinateToRowColumn(coord), row = _g[0], col = _g[1];
                 console.log("".concat(coord, " => row=").concat(row, ", col=").concat(col));
                 bounds.apply(row, col);
             }
@@ -1525,7 +1535,7 @@ var GobanPositionViewer = /** @class */ (function () {
         this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
         if (opts === null || opts === void 0 ? void 0 : opts.crop) {
             if (opts.crop == "auto" || opts.crop == "square") {
-                var bounds = node.bounds();
+                var bounds = node.bounds({ includeNonStones: true });
                 // alert(JSON.stringify(bounds))
                 bounds.increase(this.size, 2, 6);
                 // alert(JSON.stringify(bounds))
