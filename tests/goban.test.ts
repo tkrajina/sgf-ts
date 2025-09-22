@@ -1,4 +1,5 @@
 import { SGFGoban } from "../src/goban";
+import { parseSGF } from "../src/parser";
 import { coordinateToRowColumn, rowColumnToCoordinate, SGFColor, SGFNode, SGFProperty, Tag } from "../src/sgf";
 
 // (;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[13]DT[2022-12-04];B[aa];W[ba];B[ca];W[ab])
@@ -37,5 +38,50 @@ W....
 .....
 .....
 .....`);
+	})
+	test('disallow suicide', () => {
+		const node = parseSGF(`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-01-26]AB[ab][bb][cb][db][da][ag][cg][ae][be][ce][de][ee][ef][eg]AW[aa][ca][gb][fc][gd][af][bf][cf][df][dg])`)
+		const g = new SGFGoban(node);
+		expect(g.debugStr()).toBe(`W.WB...
+BBBB..W
+.....W.
+......W
+BBBBB..
+WWWWB..
+B.BWB..`);
+		try {
+			g.playStone(SGFColor.WHITE, rowColumnToCoordinate([0, 1]));
+			fail("suicide!");
+		} catch (e) {
+			expect(g.debugStr()).toBe(`W.WB...
+BBBB..W
+.....W.
+......W
+BBBBB..
+WWWWB..
+B.BWB..`);
+			expect(e.message).toBe("Suicide not allowed");
+		}
+		try {
+			g.playStone(SGFColor.BLACK, rowColumnToCoordinate([2, 6]));
+			fail("suicide!");
+		} catch (e) {
+			expect(e.message).toBe("Suicide not allowed");
+		}
+			expect(g.debugStr()).toBe(`W.WB...
+BBBB..W
+.....W.
+......W
+BBBBB..
+WWWWB..
+B.BWB..`);
+		g.playStone(SGFColor.BLACK, rowColumnToCoordinate([6, 1]));
+			expect(g.debugStr()).toBe(`W.WB...
+BBBB..W
+.....W.
+......W
+BBBBB..
+....B..
+BBB.B..`);
 	})
   });

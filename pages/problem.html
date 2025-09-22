@@ -6,16 +6,27 @@
             let exports = {};
         </script>
         <script src="all.js"></script>
+        <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
     </head>
     <body>
         <span id="goban1"></span>
 
+        <span id="goban1_turn" onclick="void(goban.animate(250, 500))">&nbsp;●&nbsp;</span>
+        &middot;
         <a href="javascript:void(goban1.previous())">Back</a>
         &middot;
         <a href="javascript:void(goban1.reset())">Reset</a>
+        &middot;
+        <span class="toggle_solution">
+            <a href="javascript:void(goban1.toggleShowSolution())">Show/hide solution</a>
+            &middot;
+        </span>
+        <small id="goban1_coordinate_clicked"></small>
+        <a class="toggle_solution" href="javascript:void(goban1.animateSolution())">Animate</a>
         <strong><p id="goban1_comment"></p></strong>
 
         <script>
+
             document.addEventListener('keydown', async (event) => {
                 console.log(event.metaKey, "...", event.code)
                 if (event.metaKey && event.code == "KeyV") {
@@ -24,8 +35,7 @@
                     const node = parseSGF(sgf);
                     const params = {sgf: sgf};
                     if (window.confirm("Redirect to new SGF?")) {
-                        const crop = window.prompt("Crop (top,right,bottom,left)?") || "0,0,0,0";
-                        window.location.href = `${window.location.protocol}//${window.location.host}${window.location.pathname}?crop=${crop}&sgf=${encodeURI(sgf)}`;
+                        window.location.href = `${window.location.protocol}//${window.location.host}${window.location.pathname}?sgf=${encodeURI(sgf)}`;
                     }
                     return;
                 }
@@ -44,6 +54,14 @@
             });
             const params = new URLSearchParams(window.location.search);
             let sgf = params.get("sgf");
+//             sgf = "(;SKIP[2]GM[1]FF[4]CA[UTF-8]AP[CGoban:3]ST[2]RU[Japanese]SZ[19]KM[0.00]PW[Weiß]PB[Schwarz]AW[ac][bc][bd][cd][ce][de][he][df][ef][gf]AB[ab][bb][cc][ad][dd][ed][be][bf][cf][dg][eg]PL[B](;B[ff];W[ae](;B[ee];W[fe](;B[ad]C[+])(;B[fg]C[+]))(;B[fe]C[+])(;B[fg];W[fe];B[ee]C[+])(;B[af];W[fe](;B[fg];W[ee])(;B[ee];W[fg])(;B[ad];W[fg])))(;B[ee];W[ff])(;B[fe];W[ff])) ";
+//             sgf = `
+// (;GM[1]FF[4]SZ[19]AP[Sabaki:0.52.2]AB[pa:pc][qa][ob][nc][od:of][mf][ng][pg:rg][mi][oj][qj:rj]AW[ra][qb:qc][sb][pd:pf][og:oh][ph:rh]PL[B]VW[ja:sk]FG[4353:Dia. 1: Black to play]C[Save the three stones.]TR[pg][qg][rg]CA[UTF-8]SO[books_sgf/essential_go_proverbs/chapter_4_tactics/01_a_cut_can_decide_the_game/example07.sgf variant 1];B[qd];W[qe];B[rd];W[re];B[sh](;W[si];B[sg];W[ri];B[se]LB[rc:A]C[A doesn't work, why?];W[rc];B[sd];W[sc];B[sf]C["Temporary seki" until white's external liberties are filled.
+// !anki -4])(;W[rc]C[]))
+// `;
+//                 sgf = `
+// (;SZ[19]AW[qi][qj][rj][rk][rl]AB[qf][ph][qh][ri][pj][ok][qk][ql][qm][rm]LB[hj:Yes][lj:No]C[If White plays first can White live?]PL[W];W[lj];AE[lj]LB[lj:No]C[RIGHT])
+// `;
             if (!sgf) {
                 alert("Missing sgf parameter");
                 sgf = "(;)";
@@ -51,6 +69,8 @@
             const node = parseSGF(sgf);
             const crop = (params.get("crop") || "").split(",").map(s => parseInt(s) || 0);
         </script>
-        <script>goban1 = new ProblemGobanViewer("goban1", node, {cropTop: crop[0]||0, cropRight: crop[1]||0, cropBottom: crop[2]||0, cropLeft: crop[3]||0, coordinates: true, mode: "PROBLEM"})</script>
+        <script>
+        goban1 = new ProblemGobanViewer("goban1", node, {crop: "square", coordinates: true});
+        </script>
     </body>
 </html>

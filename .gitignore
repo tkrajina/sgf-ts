@@ -1,5 +1,5 @@
-all.*
 .DS_Store
 tmp/*
 node_modules/*
 .vscode
+TODO.*
