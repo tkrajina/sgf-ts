@@ -484,8 +484,8 @@ class GobanPositionViewer {
 
 	coordinates: boolean = false;
 
-	private mouseOverRow: number;
-	private mouseOverCol: number;
+	private mouseOverRow: number | undefined;
+	private mouseOverCol: number | undefined;
 
 	private onClick?: (row: number, col: number, SGFColor) => void;
 
@@ -890,7 +890,7 @@ class GobanPositionViewer {
 			this.mouseOverRow = row;
 			this.mouseOverCol = col;
 
-			let nextColor: string;
+			let nextColor: string = "";
 			if (this.goban.nextToPlay == SGFColor.WHITE) {
 				nextColor = "white";
 			} else if (this.goban.nextToPlay == SGFColor.BLACK) {
@@ -930,11 +930,15 @@ class GobanPositionViewer {
 		this.drawStone(row, column);
 		console.log(`Label ${label} on ${row},${column}`);
 		const stoneDiv = this.getStoneElement(row, column);
+		if (!stoneDiv) {
+			console.error("No stone element found");
+			return;
+		}
 		const stone = this.goban.stoneAt(rowColumnToCoordinate([row, column]));
 		let defaultStoneSide = label.length <= 1 ? 0.9 : 0.5;
 		const div = getOrCreateElement(this.idPrefix, "div", `label-${row}-${column}`, {
 			color: opts.color,
-			backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : null,
+			backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : undefined,
 			display: "flex",
 			alignSelf: "center",
 			justifySelf: "center",

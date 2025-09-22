@@ -114,7 +114,7 @@ export class Bounds {
 	}
 }
 
-export function expandCoordinatesRange(_coords: string | SGFCoordinate | string[]) {
+export function expandCoordinatesRange(_coords: string | SGFCoordinate | string[] | undefined) {
 	if (!_coords) {
 		return [];
 	}
@@ -311,7 +311,7 @@ export class SGFNode {
 			return path;
 		}
 		if (!this.children?.length) {
-			return null;
+			return path;
 		}
 		for (const child of this.children) {
 			const subPath = child.findPath(subnode, path.slice());
@@ -319,7 +319,7 @@ export class SGFNode {
 				return subPath;
 			}
 		}
-		return null;
+		return [];
 	}
 
 	bounds(opts?: {includeNonStones: boolean}) {
@@ -352,8 +352,11 @@ export class SGFNode {
 		return bounds;
 	}
 
-	findFirstProperty(p: Tag | string) {
+	findFirstProperty(p: Tag | string): string|undefined {
 		let props = this.getProperties(p);
+		if (!props) {
+			return undefined;
+		}
 		if (props?.length > 0) {
 			return props.find(s => !!s) || "";
 		}
@@ -490,7 +493,7 @@ export class SGFNode {
 		if (w !== undefined)  {
 			return [SGFColor.WHITE, w];
 		}
-		return [undefined, undefined];
+		return [SGFColor.INVALID, ""];
 	}
 
 	mainLine() {

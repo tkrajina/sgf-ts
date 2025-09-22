@@ -35,7 +35,7 @@ export class GobanPosition {
 		return res;
 	}
 
-	coordinateValid(row, column: number) {
+	coordinateValid(row: number, column: number) {
 		return row >= 0 && row < this.size && column >= 0 && column < this.size;
 	}
 
@@ -138,10 +138,10 @@ export class GobanPosition {
 
 export class SGFGoban extends GobanPosition {
 
-	latestMove: SGFCoordinate;
-	nextToPlay: SGFColor;
+	latestMove: SGFCoordinate | undefined;
+	nextToPlay: SGFColor = SGFColor.NONE;
 
-	comment: string;
+	comment: string = "";
 	triangles: {[coord: SGFCoordinate]: boolean} = {};
 	squares: {[coord: SGFCoordinate]: boolean} = {};
 	crosses: {[coord: SGFCoordinate]: boolean} = {};
@@ -149,7 +149,7 @@ export class SGFGoban extends GobanPosition {
 	labels: {[coord: SGFCoordinate]: string} = {};
 
 	constructor(public sizeOrNode: number | SGFNode = 19) {
-		super("number" == typeof sizeOrNode ? sizeOrNode as number : parseInt((sizeOrNode as SGFNode).getProperty(Tag.Size)) || 19);
+		super("number" == typeof sizeOrNode ? sizeOrNode as number : parseInt((sizeOrNode as SGFNode).getProperty(Tag.Size) || "") || 19);
 		let node: SGFNode | undefined;
 		if (sizeOrNode instanceof SGFNode) {
 			node = sizeOrNode as SGFNode;
@@ -165,7 +165,7 @@ export class SGFGoban extends GobanPosition {
 
 	playStone(color: SGFColor, coords: SGFCoordinate): SGFCoordinate[] {
 		if (!coords) {
-			return; // pass
+			return []; // pass
 		}
 
 		const newPosition = new GobanPosition(this.size, JSON.parse(JSON.stringify(this.goban)));

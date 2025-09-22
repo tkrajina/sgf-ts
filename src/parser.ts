@@ -154,14 +154,14 @@ export class SGFParser {
 		})
 	}
 
-	readProperty(): SGFProperty {
+	readProperty(): SGFProperty|undefined {
 		// console.log(`reading property ${this.debugPositionStr()}`);
 		this.skipWhitespaces();
 		const tag = this.readWhile((_prev, curr, _next) => {
 			return isAlpha(curr);
 		})
 		if (!tag) {
-			return null;
+			return undefined;
 		}
 
 		this.skipWhitespaces();

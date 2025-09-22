@@ -4,7 +4,7 @@ test: compile
 
 .PHONY: compile
 compile:
-	#./node_modules/.bin/tsc
+	npx tsc
 
 .PHONY: single-test
 single-test:
