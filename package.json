@@ -1,5 +1,5 @@
 {
-  "name": "sgf-goban-ts",
+  "name": "sgf-ts",
   "version": "0.0.1",
   "description": "Typescript SGF parser",
   "author": "Tomo Krajina",
