@@ -211,7 +211,7 @@ export class SGFGoban extends GobanPosition {
 	}
 
 	applyNodes(...nodes: SGFNode[]): SGFCoordinate[] {
-		let res: SGFCoordinate[];
+		let res: SGFCoordinate[] = [];
 		for (const node of nodes) {
 			res = this.applySingleNode(node);
 		}
@@ -232,7 +232,7 @@ export class SGFGoban extends GobanPosition {
 		this.circles = {};
 		this.labels = {};
 
-		this.comment = node.getProperty(Tag.Comment);
+		this.comment = node.getProperty(Tag.Comment) || "";
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Triangle))) { this.triangles[tr] = true; }
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.Square))) { this.squares[tr] = true; }
 		for (const tr of expandCoordinatesRange(node.getProperties(Tag.X))) { this.crosses[tr] = true; }
@@ -266,6 +266,7 @@ export class SGFGoban extends GobanPosition {
 				this.nextToPlay = SGFColor.WHITE;
 			}
 		}
+		return [];
 	}
 
 }

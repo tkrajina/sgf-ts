@@ -31,28 +31,28 @@ describe('testing index file', () => {
 	});
 	test('tags', () => {
 	  expect(new SGFParser("").readProperty()).toBe(null);
-	  expect(new SGFParser("ASD[]").readProperty().name).toBe("ASD");
-	  expect(new SGFParser("ASD[]").readProperty().value).toBe("");
-	  expect(new SGFParser("ASD[1]").readProperty().value).toBe("1");
-	  expect(new SGFParser("ASD[12]").readProperty().value).toBe("12");
-	  expect(new SGFParser("ASD[123]").readProperty().value).toBe("123");
-	  expect(new SGFParser(`ASD[12\\]3]`).readProperty().value).toBe("12]3");
-	  expect(new SGFParser(" ASD[]").readProperty().name).toBe("ASD");
-	  expect(new SGFParser("ASD []").readProperty().value).toBe("");
-	  expect(new SGFParser("ASD[1] ").readProperty().value).toBe("1");
-	  expect(new SGFParser("ASD  [12]").readProperty().value).toBe("12");
-	  expect(new SGFParser("ASD\n[123]").readProperty().value).toBe("123");
-	  expect(new SGFParser(`ASD\t[12\\]3]`).readProperty().value).toBe("12]3");
+	  expect(new SGFParser("ASD[]").readProperty()!.name).toBe("ASD");
+	  expect(new SGFParser("ASD[]").readProperty()!.value).toBe("");
+	  expect(new SGFParser("ASD[1]").readProperty()!.value).toBe("1");
+	  expect(new SGFParser("ASD[12]").readProperty()!.value).toBe("12");
+	  expect(new SGFParser("ASD[123]").readProperty()!.value).toBe("123");
+	  expect(new SGFParser(`ASD[12\\]3]`).readProperty()!.value).toBe("12]3");
+	  expect(new SGFParser(" ASD[]").readProperty()!.name).toBe("ASD");
+	  expect(new SGFParser("ASD []").readProperty()!.value).toBe("");
+	  expect(new SGFParser("ASD[1] ").readProperty()!.value).toBe("1");
+	  expect(new SGFParser("ASD  [12]").readProperty()!.value).toBe("12");
+	  expect(new SGFParser("ASD\n[123]").readProperty()!.value).toBe("123");
+	  expect(new SGFParser(`ASD\t[12\\]3]`).readProperty()!.value).toBe("12]3");
 
-	  expect(new SGFParser("A[B]").readProperty().name).toBe("A");
-	  expect(new SGFParser("A[B]").readProperty().value).toBe("B");
+	  expect(new SGFParser("A[B]").readProperty()!.name).toBe("A");
+	  expect(new SGFParser("A[B]").readProperty()!.value).toBe("B");
 	});
 	test('multiple values', () => {
-	  expect(new SGFParser("ASD[12]").readProperty().values.length).toBe(1);
-	  expect(new SGFParser("ASD[12]").readProperty().value).toBe("12");
-	  expect(new SGFParser("ASD[12][34]").readProperty().values.length).toBe(2);
-	  expect(new SGFParser("ASD[12][34]").readProperty().values[0]).toBe("12");
-	  expect(new SGFParser("ASD[12][34]").readProperty().values[1]).toBe("34");
+	  expect(new SGFParser("ASD[12]").readProperty()!.values.length).toBe(1);
+	  expect(new SGFParser("ASD[12]").readProperty()!.value).toBe("12");
+	  expect(new SGFParser("ASD[12][34]").readProperty()!.values.length).toBe(2);
+	  expect(new SGFParser("ASD[12][34]").readProperty()!.values[0]).toBe("12");
+	  expect(new SGFParser("ASD[12][34]").readProperty()!.values[1]).toBe("34");
 
 	  expect(new SGFParser("ASD[12][34]X[]").readProperties().length).toBe(2);
 	  expect(new SGFParser("ASD[1234]X[]").readProperties().length).toBe(2);

@@ -60,13 +60,13 @@ BBBB..W
 BBBBB..
 WWWWB..
 B.BWB..`);
-			expect(e.message).toBe("Suicide not allowed");
+			expect((e as Error).message).toBe("Suicide not allowed");
 		}
 		try {
 			g.playStone(SGFColor.BLACK, rowColumnToCoordinate([2, 6]));
 			fail("suicide!");
 		} catch (e) {
-			expect(e.message).toBe("Suicide not allowed");
+			expect((e as Error).message).toBe("Suicide not allowed");
 		}
 			expect(g.debugStr()).toBe(`W.WB...
 BBBB..W

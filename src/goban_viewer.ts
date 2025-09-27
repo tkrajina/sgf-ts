@@ -21,7 +21,7 @@ const correctWords = ["correct", "točno", "+", "right"];
 function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
 	if (style) {
 		for (const key of Object.keys(style)) {
-			el.style[key] = style[key];
+			(el.style as any)[key] = (style as any)[key];
 		}
 	}
 }
@@ -64,11 +64,11 @@ enum GobanViewerMode {
 abstract class AbstractGobanViewer {
 
 	protected elementId: string;
-	protected positionViewer: GobanPositionViewer;
+	protected positionViewer: GobanPositionViewer | undefined;
 
-	protected rootNode: SGFNode;
-	protected currentNode: SGFNode;
-	protected goban: SGFGoban;
+	protected rootNode: SGFNode | undefined;
+	protected currentNode: SGFNode | undefined
+	protected goban: SGFGoban | undefined;
 
 	constructor(elementId: string, node?: SGFNode) {
 		this.elementId = elementId;
@@ -91,10 +91,12 @@ abstract class AbstractGobanViewer {
 	}
 
 	draw(opts?: GobanViewerOpts) {
-		opts.onClick = (row: number, col: number, color: SGFColor) => {
-			this.onClick(row, col, color);
+		if (opts) {
+			opts.onClick = (row: number, col: number, color: SGFColor) => {
+				this.onClick(row, col, color);
+			}
 		}
-		this.positionViewer = new GobanPositionViewer(this.elementId, this.rootNode.findPath(this.currentNode), opts);
+		this.positionViewer = new GobanPositionViewer(this.elementId, this.rootNode!.findPath(this.currentNode!), opts);
 		this.goban = this.positionViewer.goban;
 		this.updateComment();
 		this.updateNextToPlay();
@@ -103,7 +105,7 @@ abstract class AbstractGobanViewer {
 	updateComment() {
 		const c = getElement(this.elementId, "comment");
 		if (c) {
-			let {comment} = this.getCommentAndDirectives(this.currentNode);
+			let {comment} = this.getCommentAndDirectives(this.currentNode!);
 			c.innerHTML = comment?.split("\n").filter(line => line?.[0] !== "!").join("<br/>") || "";
 		}
 	}
@@ -116,12 +118,12 @@ abstract class AbstractGobanViewer {
 		if (!node) {
 			return;
 		}
-		this.positionViewer.setBgLabel("");
+		this.positionViewer!.setBgLabel("");
 		this.currentNode = node;
-		const path = this.rootNode.findPath(node);
+		const path = this.rootNode!.findPath(node);
 		this.goban = new SGFGoban();
 		this.goban.applyNodes(...path);
-		this.positionViewer.draw(this.goban);
+		this.positionViewer!.draw(this.goban);
 		this.updateComment();
 		this.updateNextToPlay();
 	}
@@ -130,9 +132,9 @@ abstract class AbstractGobanViewer {
 		let turnEl = getElement(this.elementId, "turn");
 		if (turnEl) {
 			turnEl.style.backgroundColor = BACKGROUND_COLOR;
-			if (this.goban.nextToPlay === SGFColor.BLACK) {
+			if (this.goban!.nextToPlay === SGFColor.BLACK) {
 				turnEl.style.color = "black";
-			} else if (this.goban.nextToPlay === SGFColor.WHITE) {
+			} else if (this.goban!.nextToPlay === SGFColor.WHITE) {
 				turnEl.style.color = "white";
 			}
 		}
@@ -150,16 +152,16 @@ abstract class AbstractGobanViewer {
 		let commentCleaned: string[] = [];
 		let directives: {[name: string]: string} = {};
 		const comments = node.getProperties(Tag.Comment);
-		if (comments?.length > 0) {
-			for (const comment of comments) {
+		if (comments && comments.length > 0) {
+			for (const comment of comments!) {
 				console.log("comment:" + comment);
 				for (let line of comment.split("\n")) {
 					line = line.trim();
 					console.log("line:" + line)
-					if (line?.[0] === "!") {
+					if (line && line[0] === "!") {
 						line = line.substring(1);
 						const parts = line.split(/\s+/);
-						const key = parts.shift().toUpperCase();
+						const key = parts.shift()!.toUpperCase();
 						const val = parts.join(" ").trim();
 						directives[key] = val || "true";
 					} else {
@@ -171,7 +173,7 @@ abstract class AbstractGobanViewer {
 		return {comment: commentCleaned.join("\n"), directives: directives};
 	}
 
-	abstract onClick(row: number, col: number, color: SGFColor);
+	abstract onClick(row: number, col: number, color: SGFColor): void;
 }
 
 type ProblemGobanViewerOpts = GobanViewerOpts & {onCorrect: (node: SGFNode) => void};
@@ -194,18 +196,18 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 
 		if (this.initialSkip > 0) {
 			const goban = new SGFGoban();
-			let tmpNode = this.rootNode;
+			let tmpNode = this.rootNode!;
 			for (let i = 0; i < this.initialSkip; i++) {
 				goban.applyNodes(tmpNode);
-				tmpNode = tmpNode.children?.[0];
+				tmpNode = tmpNode.children?.[0]!;
 			}
-			this.rootNode = this.rootNode.flattenToNode(tmpNode);
-			this.rootNode.children = tmpNode.children;
+			this.rootNode = this.rootNode!.flattenToNode(tmpNode!);
+			this.rootNode.children = tmpNode!.children;
 			this.currentNode = this.rootNode;
 		}
 
-		this.fillSolutionsMetadata(this.rootNode);
-		let [color] = this.rootNode.playerAndCoordinates()
+		this.fillSolutionsMetadata(this.rootNode!);
+		let [color] = this.rootNode!.playerAndCoordinates()
 		this.autoPlayColor = color;
 
 		super.draw({mode: GobanViewerMode.PROBLEM, ...this.opts});
@@ -218,7 +220,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 	}
 
 	parseDirectives() {
-		for (const node of this.rootNode.mainLine()) {
+		for (const node of this.rootNode!.mainLine()) {
 			const crop = this.getPropertyOrCommandDirective("crop", node) as string;
 			if (crop) {
 				if ((crop as CropType) == "auto" || (crop as CropType) == "square") {
@@ -246,7 +248,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 			}
 			const anki = this.getPropertyOrCommandDirective("anki", node);
 			if (anki) {
-				const mainLine = this.rootNode.mainLine();
+				const mainLine = this.rootNode!.mainLine();
 				const n = mainLine.length;
 				let ankiFrom = parseInt(anki)
 				if (!isNaN(ankiFrom)) {
@@ -289,8 +291,8 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		})
 		if (!solutionFound) {
 			console.log("Solution is not specified in the SGF => assume main line is solution");
-			const path = this.rootNode.mainLine();
-			for (node of path) {
+			const path = this.rootNode!.mainLine();
+			for (const node of path) {
 				(node as SGFNodeWithMetadata).pathToSolution = true;
 			}
 			(path[path.length - 1] as SGFNodeWithMetadata).solution = true;
@@ -299,7 +301,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 	}
 
 	reset() {
-		this.positionViewer.setBgLabel("");
+		this.positionViewer!.setBgLabel("");
 		super.reset();
 	}
 
@@ -315,12 +317,12 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 	goTo(node?: SGFNode) {
 		super.goTo(node);
 		if ((node as SGFNodeWithMetadata)?.solution) {
-			this.positionViewer.setBgLabel("✓", "green", {opacity: 0.6});
-			this.opts?.onCorrect?.(this.currentNode);
+			this.positionViewer!.setBgLabel("✓", "green", {opacity: 0.6});
+			this.opts?.onCorrect?.(this.currentNode!);
 		} else if ((node as SGFNodeWithMetadata)?.failure) {
-			this.positionViewer.setBgLabel("✗", "red", {opacity: 0.6});
+			this.positionViewer!.setBgLabel("✗", "red", {opacity: 0.6});
 		} else if ((node as SGFNodeWithMetadata)?.offPath) {
-			this.positionViewer.setBgLabel("?", "gray", {opacity: 0.25});
+			this.positionViewer!.setBgLabel("?", "gray", {opacity: 0.25});
 		}
 		this.markSolutions();
 	}
@@ -330,11 +332,11 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		if (this.showSolution) {
 			for (const subnode of node?.children || []) {
 				let [color, coords] = subnode.playerAndCoordinates();
-				let [row, col] = coordinateToRowColumn(coords);
+				let [row, col] = coordinateToRowColumn(coords!);
 				if ((subnode as SGFNodeWithMetadata)?.pathToSolution || (subnode as SGFNodeWithMetadata)?.solution) {
-					this.positionViewer.drawLabel(row, col, "✓", { color: "green", fontScale: .9 });
+					this.positionViewer!.drawLabel(row, col, "✓", { color: "green", fontScale: .9 });
 				} else {
-					this.positionViewer.drawLabel(row, col, "✗", { color: "red", fontScale: .9 });
+					this.positionViewer!.drawLabel(row, col, "✗", { color: "red", fontScale: .9 });
 				}
 			}
 		}
@@ -346,7 +348,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		}
 		const coord = rowColumnToCoordinate([row, col]);
 		for (const i in this.currentNode?.children || []) {
-			const child = this.currentNode.children[i];
+			const child = this.currentNode!.children![i];
 			let [_, childCoord] = child.playerAndCoordinates();
 			if (coord == childCoord) {
 				if ((child as SGFNodeWithMetadata)?.pathToSolution) {
@@ -378,8 +380,8 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		node.setProperty(Tag.Comment, "Wrong (off path)");
 		node.setMove(color, coord);
 		try {
-			this.goban.applyNodes(node); // TODO: Check for errors
-			this.currentNode.appendNode(node);
+			this.goban!.applyNodes(node); // TODO: Check for errors
+			this.currentNode!.appendNode(node);
 			this.goTo(node);
 		} catch (e) {
 			console.error(e);
@@ -390,7 +392,7 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		if (this.autoPlayTimeout) {
 			return;
 		}
-		const node = this.currentNode.children?.[0];
+		const node = this.currentNode!.children?.[0];
 		if (!node) {
 			return;
 		}
@@ -414,15 +416,15 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 	}
 
 	animateSolution(interval = AUTOPLAY_INTERVAL) {
-		let firstSolution: SGFNode[];
-		this.rootNode.walkUntil((node: SGFNode, path: SGFNode[]) => {
+		let firstSolution: SGFNode[] = [];
+		this.rootNode!.walkUntil((node: SGFNode, path: SGFNode[]) => {
 			if ((node as SGFNodeWithMetadata)?.solution) {
 				firstSolution = path;
 				return true;
 			}
 			return false;
 		});
-		if (firstSolution) {
+		if (firstSolution.length > 0) {
 			this.animate(firstSolution, interval);
 		}
 	}
@@ -431,12 +433,12 @@ class ProblemGobanViewer extends AbstractGobanViewer {
 		if (this.autoPlayTimeout) {
 			return;
 		}
-		const path = this.rootNode.findPath(this.currentNode);
+		const path = this.rootNode!.findPath(this.currentNode!);
 		if ((path?.length || 0) <= 1) {
 			return;
 		}
-		path.pop();
-		this.goTo(path[path.length - 1])
+		path!.pop();
+		this.goTo(path![path!.length - 1])
 	}
 }
 
@@ -446,9 +448,9 @@ interface GobanViewerOpts {
 	mode?: GobanViewerMode,
 	side?: number,
 	unit?: string,
-	crop: CropType,
-	cropLeft: number
-	onClick?: (row: number, col: number, coloe: SGFColor) => void;
+	crop?: CropType,
+	cropLeft?: number
+	onClick?: (row: number, col: number, color: SGFColor) => void;
 	coordinates?: boolean;
 	animationSpeed?: number;
 }
@@ -465,14 +467,14 @@ class GobanPositionViewer {
 	/** Side of the goban including the cropped parts */
 	width = 80; // This can change when cropping and zooming
 
-	bandWidth: number;
+	bandWidth: number = 0;
 	unit = "vmin";
-	goban: SGFGoban;
+	goban!: SGFGoban;
 
-	rootElement: HTMLElement;
-	gobanDiv: HTMLElement;
-	bgLabelDiv: HTMLElement;
-	tmpHoverStone: HTMLElement;
+	rootElement!: HTMLElement;
+	gobanDiv!: HTMLElement;
+	bgLabelDiv!: HTMLElement;
+	tmpHoverStone!: HTMLElement;
 
 	cropTop = 0;
 	cropRight = 0;
@@ -487,7 +489,7 @@ class GobanPositionViewer {
 	private mouseOverRow: number | undefined;
 	private mouseOverCol: number | undefined;
 
-	private onClick?: (row: number, col: number, SGFColor) => void;
+	private onClick?: (row: number, col: number, color: SGFColor) => void;
 
 	constructor(private elementId: string, nodeOrNodes: SGFNode[] | SGFNode, opts?: GobanViewerOpts) {
 		let node: SGFNode;
@@ -504,8 +506,8 @@ class GobanPositionViewer {
 		this.width = opts?.side || 80;
 		this.originalWidth = this.width;
 		this.unit = opts?.unit || "vmin";
-		this.rootElement = document.getElementById(this.elementId);
-		this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
+		this.rootElement = document.getElementById(this.elementId)!;
+		this.size = parseInt(node.findFirstProperty(Tag.Size) || "") || 19;
 		if (opts?.crop) {
 			if (opts.crop == "auto" || opts.crop == "square") {
 				const bounds = node.bounds({includeNonStones: true});
@@ -534,7 +536,7 @@ class GobanPositionViewer {
 			}
 		}
 		this.onClick = opts?.onClick;
-		this.coordinates = opts?.coordinates;
+		this.coordinates = opts?.coordinates || false;
 		if (!this.rootElement) {
 			alert("no goban element found");
 			return;
@@ -771,11 +773,11 @@ class GobanPositionViewer {
 		clearTimeout(this.coordinateTimeout);
 		const el = getElement(this.elementId, "coordinate_clicked");
 		if (el) {
-			const coord = rowColumnToCoordinate([this.mouseOverRow, this.mouseOverCol]);
-			el.innerHTML = `${coordinatesLetters.charAt(this.mouseOverCol).toUpperCase()}${this.size - this.mouseOverRow} / ${coord}`;
+			const coord = rowColumnToCoordinate([this.mouseOverRow!, this.mouseOverCol!]);
+			el.innerHTML = `${coordinatesLetters.charAt(this.mouseOverCol!).toUpperCase()}${this.size - this.mouseOverRow!} / ${coord}`;
 		}
 		this.coordinateTimeout = setTimeout(() => {
-			el.innerHTML = "";
+			if (el) el.innerHTML = "";
 		}, 1000)
 	}
 
@@ -879,7 +881,7 @@ class GobanPositionViewer {
 			})
 		} else {
 			applyStyle(stoneElement.element, {
-				backgroundColor: null,
+				backgroundColor: "",
 			});
 		}
 	}

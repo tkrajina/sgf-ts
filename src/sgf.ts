@@ -175,7 +175,7 @@ export class SGFNode {
 	flattenToNode(target: SGFNode, enumerate = false): SGFNode {
 		const path = this.findPath(target);
 		if (!path?.length) {
-			return;
+			return new SGFNode([], []);
 		}
 		enumerate = true;
 		console.log(`flattening with ${path?.length} nodes`);
@@ -207,7 +207,7 @@ export class SGFNode {
 			[Tag.User]: true,
 			[Tag.WhiteRank]: true,
 			[Tag.WhiteTeam]: true,
-		};
+		} as {[tag: string]: boolean};
 
 		const enumeratedLabels: {[coord: string]: number[]} = {};
 		let n = 0;
@@ -449,7 +449,7 @@ export class SGFNode {
 		return "(" + this.toSGFNode() + ")";
 	}
 
-	toSGFNode() {
+	toSGFNode(): string {
 		let sgf = ";";
 		for (const prop of this.properties) {
 			sgf += prop.name;
