@@ -61,7 +61,7 @@ enum GobanViewerMode {
 	GUESS_MOVE = "GUESS_MOVE",
 }
 
-abstract class AbstractGobanViewer {
+export abstract class AbstractGobanViewer {
 
 	protected elementId: string;
 	protected positionViewer: GobanPositionViewer | undefined;
@@ -178,7 +178,7 @@ abstract class AbstractGobanViewer {
 
 type ProblemGobanViewerOpts = GobanViewerOpts & {onCorrect: (node: SGFNode) => void};
 
-class ProblemGobanViewer extends AbstractGobanViewer {
+export class ProblemGobanViewer extends AbstractGobanViewer {
 
 	initialSkip = 0;
 	showSolution = false;
