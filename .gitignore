@@ -3,4 +3,3 @@ tmp/*
 node_modules/*
 .vscode
 TODO.*
-src/*.js
