@@ -7,13 +7,13 @@ import { rowColumnToCoordinate, SGFColor, SGFNode, Tag } from "../src/sgf";
 describe('flattening nodes', () => {
 	test('no flatteing', () => {
 		const node = parseSGF(`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-02-02];B[aa];W[ba])`);
-		expect(node.flattenToNode(node).toSGF()).toBe(`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-02-02];B[aa];W[ba])`);
+		expect(node.flattenToNode(node, {propsToKeep: ["CA"]}).toSGF()).toBe(`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-02-02];B[aa];W[ba])`);
 	}),
 	test('flatten single move', () => {
 		const node = parseSGF(`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-02-02];B[aa];W[ba])`);
 		const goban = new SGFGoban();
 		expect(node.children[0].children[0].getProperty(Tag.White)).toBe("ba");
-		const flattened = node.flattenToNode(node.children[0].children[0]);
+		const flattened = node.flattenToNode(node.children[0].children[0], {propsToKeep: ["CA"]});
 		expect(flattened.toSGF()).toBe("(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-02-02]AB[aa]AW[ba])");
 		expect(flattened.children?.length).toBe(0);
 		goban.applyNodes(flattened);
@@ -43,7 +43,7 @@ BW.................
 		const node = parseSGF(`(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-02-02];B[aa];W[ba](;B[ca])(;B[cb])(;B[bb]))`);
 		const goban = new SGFGoban();
 		expect(node.children[0].children[0].getProperty(Tag.White)).toBe("ba");
-		const flattened = node.flattenToNode(node.children[0].children[0]);
+		const flattened = node.flattenToNode(node.children[0].children[0], {propsToKeep: ["CA"]});
 		expect(flattened.toSGF()).toBe("(;GM[1]FF[4]CA[UTF-8]AP[Sabaki:0.52.2]KM[6.5]SZ[7]DT[2024-02-02]AB[aa]AW[ba](;B[ca])(;B[cb])(;B[bb]))");
 		expect(flattened.children?.length).toBe(3);
 		goban.applyNodes(flattened);
@@ -72,11 +72,11 @@ BW.................
 	test('flatten and keep next player color', () => {
 		const node = parseSGF(`(;PL[B]DT[2024-02-02]SZ[7]AP[Sabaki:0.52.2]CA[UTF-8];B[aa];W[ba];B[ca])`);
 		const ml = node.mainLine();
-		const flattened = node.flattenToNode(ml[ml.length - 1]);
+		const flattened = node.flattenToNode(ml[ml.length - 1], {propsToKeep: ["CA"]});
 		const goban = new SGFGoban();
 		goban.applyNodes(flattened);
 		expect(flattened.getProperty(Tag.Player)).toBe(SGFColor.WHITE);
-		expect(flattened.toSGF()).toBe("(;PL[W]DT[2024-02-02]SZ[7]AP[Sabaki:0.52.2]CA[UTF-8]AB[aa][ca]AW[ba])");
+		expect(flattened.toSGF()).toBe("(;DT[2024-02-02]SZ[7]AP[Sabaki:0.52.2]CA[UTF-8]AB[aa][ca]AW[ba]PL[W])");
 		expect(goban.debugStr()).toBe(`
 BWB................
 ...................

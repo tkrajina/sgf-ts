@@ -172,12 +172,14 @@ export class SGFNode {
 
 	constructor(public properties: SGFProperty[] = [], public children: SGFNode[] = []) {}
 
-	flattenToNode(target: SGFNode, enumerate = false): SGFNode {
+	flattenToNode(target: SGFNode, opts?: {enumerate?: boolean, propsToKeep?: string[]}): SGFNode {
 		const path = this.findPath(target);
+		if (!opts) {
+			opts = {enumerate: false, propsToKeep: []};
+		}
 		if (!path?.length) {
 			return new SGFNode([], []);
 		}
-		enumerate = true;
 		console.log(`flattening with ${path?.length} nodes`);
 
 		const rootPropertiesToKeep = {
@@ -208,6 +210,11 @@ export class SGFNode {
 			[Tag.WhiteRank]: true,
 			[Tag.WhiteTeam]: true,
 		} as {[tag: string]: boolean};
+		if (opts.propsToKeep) {
+			for (const p of opts.propsToKeep) {
+				rootPropertiesToKeep[p] = true;
+			}
+		}
 
 		const enumeratedLabels: {[coord: string]: number[]} = {};
 		let n = 0;
@@ -261,7 +268,7 @@ export class SGFNode {
 			}
 		}
 
-		if (enumerate) {
+		if (opts?.enumerate) {
 			for (const coord in enumeratedLabels) {
 				for (const lb of enumeratedLabels[coord]) {
 					newRootNode.addProperty(Tag.Label, `${coord}:${lb}`);
@@ -354,10 +361,7 @@ export class SGFNode {
 
 	findFirstProperty(p: Tag | string): string|undefined {
 		let props = this.getProperties(p);
-		if (!props) {
-			return undefined;
-		}
-		if (props?.length > 0) {
+		if (props && props.length > 0) {
 			return props.find(s => !!s) || "";
 		}
 		for (const sub of this.children) {
