@@ -70,13 +70,14 @@ export abstract class AbstractGobanViewer {
 	protected currentNode: SGFNode | undefined
 	protected goban: SGFGoban | undefined;
 
-	constructor(elementId: string, node?: SGFNode) {
+	constructor(elementId: string, nodeOrStr?: SGFNode|string) {
 		this.elementId = elementId;
 		const rootElement = document.getElementById(this.elementId);
 		if (!rootElement) {
 			alert("no goban element found by  " + elementId);
 			return;
 		}
+		let node = ("string" === typeof nodeOrStr) ? parseSGF(nodeOrStr) : nodeOrStr as SGFNode;;
 		if (!node) {
 			const sgf = rootElement.innerText.trim();
 			try {
@@ -176,6 +177,38 @@ export abstract class AbstractGobanViewer {
 	abstract onClick(row: number, col: number, color: SGFColor): void;
 }
 
+export class ClickableGobanViewer extends AbstractGobanViewer {
+
+	opts: ProblemGobanViewerOpts;
+
+	constructor(elementId: string, node?: SGFNode, opts?: ProblemGobanViewerOpts) {
+		super(elementId, node);
+		this.opts = opts || {} as ProblemGobanViewerOpts;
+		super.draw({mode: GobanViewerMode.PLAY, ...this.opts});
+	};
+
+	onClick(row: number, col: number, color: SGFColor) {
+		const coord = rowColumnToCoordinate([row, col]);
+		for (const i in this.currentNode?.children || []) {
+			const child = this.currentNode!.children![i];
+			let [_, childCoord] = child.playerAndCoordinates();
+			if (coord == childCoord) {
+				this.goTo(child);
+				return;
+			}
+		}
+		const node = (new SGFNode()) as SGFNodeWithMetadata;
+		node.setMove(color, coord);
+		try {
+			this.goban!.applyNodes(node); // TODO: Check for errors
+			this.currentNode!.appendNode(node);
+			this.goTo(node);
+		} catch (e) {
+			console.error(e);
+		}
+	}
+}
+
 type ProblemGobanViewerOpts = GobanViewerOpts & {onCorrect: (node: SGFNode) => void};
 
 export class ProblemGobanViewer extends AbstractGobanViewer {
@@ -189,7 +222,7 @@ export class ProblemGobanViewer extends AbstractGobanViewer {
 
 	opts: ProblemGobanViewerOpts;
 
-	constructor(elementId: string, node?: SGFNode, opts?: ProblemGobanViewerOpts) {
+	constructor(elementId: string, node?: SGFNode|string, opts?: ProblemGobanViewerOpts) {
 		super(elementId, node);
 		this.opts = opts || {} as ProblemGobanViewerOpts;
 		this.parseDirectives();

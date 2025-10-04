@@ -31,6 +31,6 @@ single-js: clean
 
 	tsc all.ts
 	mv all.js pages
-	open pages/problem.html
+	open pages/clickable.html
 	rm all.ts
 

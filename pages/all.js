@@ -35,8 +35,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -71,7 +71,13 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SGFGoban = exports.GobanPosition = exports.isAlpha = exports.SGFParser = exports.parseSGFCollection = exports.parseSGF = exports.SGFProperty = exports.SGFNode = exports.rowColumnToCoordinate = exports.coordinateToRowColumn = exports.SGFColor = exports.expandCoordinatesRange = exports.Bounds = exports.Tag = void 0;
+exports.ProblemGobanViewer = exports.ClickableGobanViewer = exports.AbstractGobanViewer = exports.SGFGoban = exports.GobanPosition = exports.SGFParser = exports.SGFProperty = exports.SGFNode = exports.SGFColor = exports.Bounds = exports.Tag = void 0;
+exports.expandCoordinatesRange = expandCoordinatesRange;
+exports.coordinateToRowColumn = coordinateToRowColumn;
+exports.rowColumnToCoordinate = rowColumnToCoordinate;
+exports.parseSGF = parseSGF;
+exports.parseSGFCollection = parseSGFCollection;
+exports.isAlpha = isAlpha;
 var Tag;
 (function (Tag) {
     Tag["Annotations"] = "AN";
@@ -226,7 +232,6 @@ function expandCoordinatesRange(_coords) {
     }
     return res;
 }
-exports.expandCoordinatesRange = expandCoordinatesRange;
 var SGFColor;
 (function (SGFColor) {
     SGFColor["BLACK"] = "B";
@@ -239,11 +244,9 @@ function coordinateToRowColumn(c) {
     var col = c.charCodeAt(1);
     return [col - 97, row - 97,];
 }
-exports.coordinateToRowColumn = coordinateToRowColumn;
 function rowColumnToCoordinate(c) {
     return String.fromCharCode(97 + c[1]) + String.fromCharCode(97 + c[0]);
 }
-exports.rowColumnToCoordinate = rowColumnToCoordinate;
 var SGFNode = /** @class */ (function () {
     function SGFNode(properties, children) {
         if (properties === void 0) { properties = []; }
@@ -251,15 +254,16 @@ var SGFNode = /** @class */ (function () {
         this.properties = properties;
         this.children = children;
     }
-    SGFNode.prototype.flattenToNode = function (target, enumerate) {
+    SGFNode.prototype.flattenToNode = function (target, opts) {
         var _a;
         var _b;
-        if (enumerate === void 0) { enumerate = false; }
         var path = this.findPath(target);
-        if (!(path === null || path === void 0 ? void 0 : path.length)) {
-            return;
+        if (!opts) {
+            opts = { enumerate: false, propsToKeep: [] };
         }
-        enumerate = true;
+        if (!(path === null || path === void 0 ? void 0 : path.length)) {
+            return new SGFNode([], []);
+        }
         console.log("flattening with ".concat(path === null || path === void 0 ? void 0 : path.length, " nodes"));
         var rootPropertiesToKeep = (_a = {},
             _a[Tag.Annotations] = true,
@@ -289,11 +293,17 @@ var SGFNode = /** @class */ (function () {
             _a[Tag.WhiteRank] = true,
             _a[Tag.WhiteTeam] = true,
             _a);
+        if (opts.propsToKeep) {
+            for (var _i = 0, _c = opts.propsToKeep; _i < _c.length; _i++) {
+                var p = _c[_i];
+                rootPropertiesToKeep[p] = true;
+            }
+        }
         var enumeratedLabels = {};
         var n = 0;
-        for (var _i = 0, path_1 = path; _i < path_1.length; _i++) {
-            var tmpNode = path_1[_i];
-            var _c = tmpNode.playerAndCoordinates(), color = _c[0], coord = _c[1];
+        for (var _d = 0, path_1 = path; _d < path_1.length; _d++) {
+            var tmpNode = path_1[_d];
+            var _e = tmpNode.playerAndCoordinates(), color = _e[0], coord = _e[1];
             if (color && coord) {
                 if (!enumeratedLabels[coord]) {
                     enumeratedLabels[coord] = [];
@@ -305,10 +315,10 @@ var SGFNode = /** @class */ (function () {
         var newRootNode = new SGFNode();
         newRootNode.properties = this.properties.filter(function (p) { return rootPropertiesToKeep[p.name]; });
         var targetTagsToCopy = [Tag.Comment, Tag.Triangle, Tag.Square, Tag.X, Tag.Circle, Tag.Label];
-        for (var _d = 0, targetTagsToCopy_1 = targetTagsToCopy; _d < targetTagsToCopy_1.length; _d++) {
-            var tag = targetTagsToCopy_1[_d];
-            for (var _e = 0, _f = target.getProperties(tag) || []; _e < _f.length; _e++) {
-                var val = _f[_e];
+        for (var _f = 0, targetTagsToCopy_1 = targetTagsToCopy; _f < targetTagsToCopy_1.length; _f++) {
+            var tag = targetTagsToCopy_1[_f];
+            for (var _g = 0, _h = target.getProperties(tag) || []; _g < _h.length; _g++) {
+                var val = _h[_g];
                 newRootNode.addProperty(tag, val);
             }
             ;
@@ -341,10 +351,10 @@ var SGFNode = /** @class */ (function () {
                 newRootNode.setProperty(Tag.Player, SGFColor.WHITE);
             }
         }
-        if (enumerate) {
+        if (opts === null || opts === void 0 ? void 0 : opts.enumerate) {
             for (var coord in enumeratedLabels) {
-                for (var _g = 0, _h = enumeratedLabels[coord]; _g < _h.length; _g++) {
-                    var lb = _h[_g];
+                for (var _j = 0, _k = enumeratedLabels[coord]; _j < _k.length; _j++) {
+                    var lb = _k[_j];
                     newRootNode.addProperty(Tag.Label, "".concat(coord, ":").concat(lb));
                 }
             }
@@ -388,7 +398,7 @@ var SGFNode = /** @class */ (function () {
             return path;
         }
         if (!((_a = this.children) === null || _a === void 0 ? void 0 : _a.length)) {
-            return null;
+            return path;
         }
         for (var _i = 0, _b = this.children; _i < _b.length; _i++) {
             var child = _b[_i];
@@ -397,7 +407,7 @@ var SGFNode = /** @class */ (function () {
                 return subPath;
             }
         }
-        return null;
+        return [];
     };
     SGFNode.prototype.bounds = function (opts) {
         var bounds = new Bounds();
@@ -434,7 +444,7 @@ var SGFNode = /** @class */ (function () {
     };
     SGFNode.prototype.findFirstProperty = function (p) {
         var props = this.getProperties(p);
-        if ((props === null || props === void 0 ? void 0 : props.length) > 0) {
+        if (props && props.length > 0) {
             return props.find(function (s) { return !!s; }) || "";
         }
         for (var _i = 0, _a = this.children; _i < _a.length; _i++) {
@@ -564,7 +574,7 @@ var SGFNode = /** @class */ (function () {
         if (w !== undefined) {
             return [SGFColor.WHITE, w];
         }
-        return [undefined, undefined];
+        return [SGFColor.INVALID, ""];
     };
     SGFNode.prototype.mainLine = function () {
         var _a;
@@ -604,7 +614,6 @@ exports.SGFProperty = SGFProperty;
 function parseSGF(sgf) {
     return new SGFParser(sgf).parse();
 }
-exports.parseSGF = parseSGF;
 function parseSGFCollection(sgf) {
     var parser = new SGFParser(sgf);
     var node;
@@ -617,7 +626,6 @@ function parseSGFCollection(sgf) {
     }
     return result;
 }
-exports.parseSGFCollection = parseSGFCollection;
 var SGFParser = /** @class */ (function () {
     function SGFParser(str) {
         this.position = 0;
@@ -784,7 +792,6 @@ var alpha = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
 function isAlpha(ch) {
     return alpha.indexOf(ch) >= 0;
 }
-exports.isAlpha = isAlpha;
 /** Just the goban stones and some basic utility methods. */
 var GobanPosition = /** @class */ (function () {
     function GobanPosition(size, goban) {
@@ -883,9 +890,9 @@ var GobanPosition = /** @class */ (function () {
         }
         var _a = coordinateToRowColumn(coord), row = _a[0], column = _a[1];
         var neighborsCoords = [
-            rowColumnToCoordinate([row - 1, column]),
-            rowColumnToCoordinate([row + 1, column]),
-            rowColumnToCoordinate([row, column - 1]),
+            rowColumnToCoordinate([row - 1, column]), // UP
+            rowColumnToCoordinate([row + 1, column]), // DOWN
+            rowColumnToCoordinate([row, column - 1]), // LEFT
             rowColumnToCoordinate([row, column + 1]) // RIGHT
         ];
         for (var _i = 0, neighborsCoords_1 = neighborsCoords; _i < neighborsCoords_1.length; _i++) {
@@ -928,8 +935,10 @@ var SGFGoban = /** @class */ (function (_super) {
     __extends(SGFGoban, _super);
     function SGFGoban(sizeOrNode) {
         if (sizeOrNode === void 0) { sizeOrNode = 19; }
-        var _this = _super.call(this, "number" == typeof sizeOrNode ? sizeOrNode : parseInt(sizeOrNode.getProperty(Tag.Size)) || 19) || this;
+        var _this = _super.call(this, "number" == typeof sizeOrNode ? sizeOrNode : parseInt(sizeOrNode.getProperty(Tag.Size) || "") || 19) || this;
         _this.sizeOrNode = sizeOrNode;
+        _this.nextToPlay = SGFColor.NONE;
+        _this.comment = "";
         _this.triangles = {};
         _this.squares = {};
         _this.crosses = {};
@@ -949,7 +958,7 @@ var SGFGoban = /** @class */ (function (_super) {
     };
     SGFGoban.prototype.playStone = function (color, coords) {
         if (!coords) {
-            return; // pass
+            return []; // pass
         }
         var newPosition = new GobanPosition(this.size, JSON.parse(JSON.stringify(this.goban)));
         var removed = [];
@@ -996,7 +1005,7 @@ var SGFGoban = /** @class */ (function (_super) {
         for (var _i = 0; _i < arguments.length; _i++) {
             nodes[_i] = arguments[_i];
         }
-        var res;
+        var res = [];
         for (var _a = 0, nodes_1 = nodes; _a < nodes_1.length; _a++) {
             var node = nodes_1[_a];
             res = this.applySingleNode(node);
@@ -1014,7 +1023,7 @@ var SGFGoban = /** @class */ (function (_super) {
         this.crosses = {};
         this.circles = {};
         this.labels = {};
-        this.comment = node.getProperty(Tag.Comment);
+        this.comment = node.getProperty(Tag.Comment) || "";
         for (var _i = 0, _b = expandCoordinatesRange(node.getProperties(Tag.Triangle)); _i < _b.length; _i++) {
             var tr = _b[_i];
             this.triangles[tr] = true;
@@ -1064,6 +1073,7 @@ var SGFGoban = /** @class */ (function (_super) {
                 this.nextToPlay = SGFColor.WHITE;
             }
         }
+        return [];
     };
     return SGFGoban;
 }(GobanPosition));
@@ -1122,13 +1132,15 @@ var GobanViewerMode;
     GobanViewerMode["GUESS_MOVE"] = "GUESS_MOVE";
 })(GobanViewerMode || (GobanViewerMode = {}));
 var AbstractGobanViewer = /** @class */ (function () {
-    function AbstractGobanViewer(elementId, node) {
+    function AbstractGobanViewer(elementId, nodeOrStr) {
         this.elementId = elementId;
         var rootElement = document.getElementById(this.elementId);
         if (!rootElement) {
             alert("no goban element found by  " + elementId);
             return;
         }
+        var node = ("string" === typeof nodeOrStr) ? parseSGF(nodeOrStr) : nodeOrStr;
+        ;
         if (!node) {
             var sgf = rootElement.innerText.trim();
             try {
@@ -1144,9 +1156,11 @@ var AbstractGobanViewer = /** @class */ (function () {
     }
     AbstractGobanViewer.prototype.draw = function (opts) {
         var _this = this;
-        opts.onClick = function (row, col, color) {
-            _this.onClick(row, col, color);
-        };
+        if (opts) {
+            opts.onClick = function (row, col, color) {
+                _this.onClick(row, col, color);
+            };
+        }
         this.positionViewer = new GobanPositionViewer(this.elementId, this.rootNode.findPath(this.currentNode), opts);
         this.goban = this.positionViewer.goban;
         this.updateComment();
@@ -1199,15 +1213,15 @@ var AbstractGobanViewer = /** @class */ (function () {
         var commentCleaned = [];
         var directives = {};
         var comments = node.getProperties(Tag.Comment);
-        if ((comments === null || comments === void 0 ? void 0 : comments.length) > 0) {
-            for (var _i = 0, comments_1 = comments; _i < comments_1.length; _i++) {
-                var comment = comments_1[_i];
+        if (comments && comments.length > 0) {
+            for (var _i = 0, _a = comments; _i < _a.length; _i++) {
+                var comment = _a[_i];
                 console.log("comment:" + comment);
-                for (var _a = 0, _b = comment.split("\n"); _a < _b.length; _a++) {
-                    var line = _b[_a];
+                for (var _b = 0, _c = comment.split("\n"); _b < _c.length; _b++) {
+                    var line = _c[_b];
                     line = line.trim();
                     console.log("line:" + line);
-                    if ((line === null || line === void 0 ? void 0 : line[0]) === "!") {
+                    if (line && line[0] === "!") {
                         line = line.substring(1);
                         var parts = line.split(/\s+/);
                         var key = parts.shift().toUpperCase();
@@ -1224,12 +1238,49 @@ var AbstractGobanViewer = /** @class */ (function () {
     };
     return AbstractGobanViewer;
 }());
+exports.AbstractGobanViewer = AbstractGobanViewer;
+var ClickableGobanViewer = /** @class */ (function (_super) {
+    __extends(ClickableGobanViewer, _super);
+    function ClickableGobanViewer(elementId, node, opts) {
+        var _this = _super.call(this, elementId, node) || this;
+        _this.opts = opts || {};
+        _super.prototype.draw.call(_this, __assign({ mode: GobanViewerMode.PLAY }, _this.opts));
+        return _this;
+    }
+    ;
+    ClickableGobanViewer.prototype.onClick = function (row, col, color) {
+        var _a;
+        if (this.currentNode == this.rootNode && color == SGFColor.NONE) {
+            color = SGFColor.BLACK;
+        }
+        var coord = rowColumnToCoordinate([row, col]);
+        for (var i in ((_a = this.currentNode) === null || _a === void 0 ? void 0 : _a.children) || []) {
+            var child = this.currentNode.children[i];
+            var _b = child.playerAndCoordinates(), _ = _b[0], childCoord = _b[1];
+            if (coord == childCoord) {
+                this.goTo(child);
+                return;
+            }
+        }
+        var node = (new SGFNode());
+        node.setMove(color, coord);
+        try {
+            this.goban.applyNodes(node); // TODO: Check for errors
+            this.currentNode.appendNode(node);
+            this.goTo(node);
+        }
+        catch (e) {
+            console.error(e);
+        }
+    };
+    return ClickableGobanViewer;
+}(AbstractGobanViewer));
+exports.ClickableGobanViewer = ClickableGobanViewer;
 var ProblemGobanViewer = /** @class */ (function (_super) {
     __extends(ProblemGobanViewer, _super);
     function ProblemGobanViewer(elementId, node, opts) {
-        var _this = this;
         var _a;
-        _this = _super.call(this, elementId, node) || this;
+        var _this = _super.call(this, elementId, node) || this;
         _this.initialSkip = 0;
         _this.showSolution = false;
         _this.autoPlayColor = undefined;
@@ -1339,8 +1390,8 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
             console.log("Solution is not specified in the SGF => assume main line is solution");
             var path = this.rootNode.mainLine();
             for (var _i = 0, path_2 = path; _i < path_2.length; _i++) {
-                node = path_2[_i];
-                node.pathToSolution = true;
+                var node_1 = path_2[_i];
+                node_1.pathToSolution = true;
             }
             path[path.length - 1].solution = true;
             this.solutionPathLengths.push(path.length);
@@ -1478,7 +1529,7 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
     };
     ProblemGobanViewer.prototype.animateSolution = function (interval) {
         if (interval === void 0) { interval = AUTOPLAY_INTERVAL; }
-        var firstSolution;
+        var firstSolution = [];
         this.rootNode.walkUntil(function (node, path) {
             if (node === null || node === void 0 ? void 0 : node.solution) {
                 firstSolution = path;
@@ -1486,7 +1537,7 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
             }
             return false;
         });
-        if (firstSolution) {
+        if (firstSolution.length > 0) {
             this.animate(firstSolution, interval);
         }
     };
@@ -1503,12 +1554,14 @@ var ProblemGobanViewer = /** @class */ (function (_super) {
     };
     return ProblemGobanViewer;
 }(AbstractGobanViewer));
+exports.ProblemGobanViewer = ProblemGobanViewer;
 var GobanPositionViewer = /** @class */ (function () {
     function GobanPositionViewer(elementId, nodeOrNodes, opts) {
         this.elementId = elementId;
         this.size = 19;
         /** Side of the goban including the cropped parts */
         this.width = 80; // This can change when cropping and zooming
+        this.bandWidth = 0;
         this.unit = "vmin";
         this.cropTop = 0;
         this.cropRight = 0;
@@ -1532,7 +1585,7 @@ var GobanPositionViewer = /** @class */ (function () {
         this.originalWidth = this.width;
         this.unit = (opts === null || opts === void 0 ? void 0 : opts.unit) || "vmin";
         this.rootElement = document.getElementById(this.elementId);
-        this.size = parseInt(node.findFirstProperty(Tag.Size)) || 19;
+        this.size = parseInt(node.findFirstProperty(Tag.Size) || "") || 19;
         if (opts === null || opts === void 0 ? void 0 : opts.crop) {
             if (opts.crop == "auto" || opts.crop == "square") {
                 var bounds = node.bounds({ includeNonStones: true });
@@ -1562,7 +1615,7 @@ var GobanPositionViewer = /** @class */ (function () {
             }
         }
         this.onClick = opts === null || opts === void 0 ? void 0 : opts.onClick;
-        this.coordinates = opts === null || opts === void 0 ? void 0 : opts.coordinates;
+        this.coordinates = (opts === null || opts === void 0 ? void 0 : opts.coordinates) || false;
         if (!this.rootElement) {
             alert("no goban element found");
             return;
@@ -1774,7 +1827,8 @@ var GobanPositionViewer = /** @class */ (function () {
             el.innerHTML = "".concat(coordinatesLetters.charAt(this.mouseOverCol).toUpperCase()).concat(this.size - this.mouseOverRow, " / ").concat(coord);
         }
         this.coordinateTimeout = setTimeout(function () {
-            el.innerHTML = "";
+            if (el)
+                el.innerHTML = "";
         }, 1000);
     };
     GobanPositionViewer.prototype.draw = function (goban) {
@@ -1879,7 +1933,7 @@ var GobanPositionViewer = /** @class */ (function () {
         }
         else {
             applyStyle(stoneElement.element, {
-                backgroundColor: null,
+                backgroundColor: "",
             });
         }
     };
@@ -1888,7 +1942,7 @@ var GobanPositionViewer = /** @class */ (function () {
             console.log("on ".concat(row, ",").concat(col));
             this.mouseOverRow = row;
             this.mouseOverCol = col;
-            var nextColor = void 0;
+            var nextColor = "";
             if (this.goban.nextToPlay == SGFColor.WHITE) {
                 nextColor = "white";
             }
@@ -1927,11 +1981,15 @@ var GobanPositionViewer = /** @class */ (function () {
         this.drawStone(row, column);
         console.log("Label ".concat(label, " on ").concat(row, ",").concat(column));
         var stoneDiv = this.getStoneElement(row, column);
+        if (!stoneDiv) {
+            console.error("No stone element found");
+            return;
+        }
         var stone = this.goban.stoneAt(rowColumnToCoordinate([row, column]));
         var defaultStoneSide = label.length <= 1 ? 0.9 : 0.5;
         var div = getOrCreateElement(this.idPrefix, "div", "label-".concat(row, "-").concat(column), {
             color: opts.color,
-            backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : null,
+            backgroundColor: stone === SGFColor.NONE ? BACKGROUND_COLOR : undefined,
             display: "flex",
             alignSelf: "center",
             justifySelf: "center",
