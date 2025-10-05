@@ -19,6 +19,9 @@ type SGFNodeWithMetadata = SGFNode & {
 const correctWords = ["correct", "točno", "+", "right"];
 
 function applyStyle(el: HTMLElement, style?: Partial<CSSStyleDeclaration>) {
+	if (!el) {
+		return;
+	}
 	if (style) {
 		for (const key of Object.keys(style)) {
 			(el.style as any)[key] = (style as any)[key];
