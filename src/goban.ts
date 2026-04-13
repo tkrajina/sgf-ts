@@ -3,19 +3,32 @@ import { coordinateToRowColumn, expandCoordinatesRange, rowColumnToCoordinate, S
 /** Just the goban stones and some basic utility methods. */
 export class GobanPosition {
 	goban: SGFColor[][] = [];
-	constructor(public readonly size: number, goban?: SGFColor[][]) {
+	public size: number;
+	constructor(size: number, goban?: SGFColor[][]) {
 		// console.log("size=" + size)
 		this.size = size;
 		if (goban) {
 			this.goban = goban;
 		} else {
-			for (let row = 0; row < this.size; row++) {
-				const r: SGFColor[] = [];
-				for (let col = 0; col < this.size; col ++) {
-					r.push(SGFColor.NONE);
-				}
-				this.goban.push(r);
+			this.readjustGoban(size);
+		}
+	}
+
+	protected readjustGoban(size: number) {
+		this.size = size;
+		if (this.goban.length != this.size) {
+			// TODO: Add or remove rows wo that it fits new size
+		}
+		for (let rowNo = 0; rowNo < this.size; rowNo++) {
+			const row = this.goban[rowNo] || [];
+			if (row.length != this.size) {
+				// TODO: Add or remove elements
 			}
+			// const r: SGFColor[] = [];
+			// for (let col = 0; col < this.size; col ++) {
+			// 	r.push(SGFColor.NONE);
+			// }
+			// this.goban.push(r);
 		}
 	}
 
@@ -219,6 +232,10 @@ export class SGFGoban extends GobanPosition {
 	}
 
 	private applySingleNode(node: SGFNode): SGFCoordinate[] {
+		const size = parseInt(node.getProperty(Tag.Size) || "");
+		if (size && size != this.size) {
+			this.readjustGoban(size);
+		}
 
 		const ab = node.getProperties(Tag.AddBlack) || [];
 		const aw = node.getProperties(Tag.AddWhite) || [];
