@@ -304,6 +304,10 @@ export class SGFGoban extends GobanPosition {
 				this.nextToPlay = SGFColor.WHITE;
 			}
 		}
+		// Default to black when no explicit turn indicator
+		if (this.nextToPlay === SGFColor.NONE) {
+			this.nextToPlay = SGFColor.BLACK;
+		}
 		return [];
 	}
 
