@@ -309,7 +309,7 @@ export class SGFNode {
 		})
 	}
 
-	findPath(subnode: SGFNode, path?: SGFNode[]): SGFNode[] {
+	findPath(subnode: SGFNode, path?: SGFNode[]): SGFNode[] | null {
 		if (!path) {
 			path = [];
 		}
@@ -318,15 +318,15 @@ export class SGFNode {
 			return path;
 		}
 		if (!this.children?.length) {
-			return path;
+			return null;
 		}
 		for (const child of this.children) {
 			const subPath = child.findPath(subnode, path.slice());
-			if (subPath) {
+			if (subPath != null) {
 				return subPath;
 			}
 		}
-		return [];
+		return null;
 	}
 
 	bounds(opts?: {includeNonStones: boolean}) {
