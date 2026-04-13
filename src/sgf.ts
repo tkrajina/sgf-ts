@@ -481,6 +481,10 @@ export class SGFNode {
 		this.children.unshift(node);
 	}
 
+	replaceChildren(...nodes: SGFNode[]) {
+		this.children = nodes;
+	}
+
 	firstChild() {
 		if (!this.children?.length) {
 			return undefined;
