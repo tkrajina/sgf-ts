@@ -15,6 +15,9 @@ const AUTOPLAY_INTERVAL = 400;
 const coordinatesLetters = "abcdefghjklmnopqrst";
 const correctWords = ["correct", "točno", "+", "right"];
 function applyStyle(el, style) {
+    if (!el) {
+        return;
+    }
     if (style) {
         for (const key of Object.keys(style)) {
             el.style[key] = style[key];
@@ -53,14 +56,16 @@ var GobanViewerMode;
     GobanViewerMode["PROBLEM"] = "PROBLEM";
     GobanViewerMode["GUESS_MOVE"] = "GUESS_MOVE";
 })(GobanViewerMode || (GobanViewerMode = {}));
-class AbstractGobanViewer {
-    constructor(elementId, node) {
+export class AbstractGobanViewer {
+    constructor(elementId, nodeOrStr) {
         this.elementId = elementId;
         const rootElement = document.getElementById(this.elementId);
         if (!rootElement) {
             alert("no goban element found by  " + elementId);
             return;
         }
+        let node = ("string" === typeof nodeOrStr) ? parseSGF(nodeOrStr) : nodeOrStr;
+        ;
         if (!node) {
             const sgf = rootElement.innerText.trim();
             try {
@@ -153,7 +158,37 @@ class AbstractGobanViewer {
         return { comment: commentCleaned.join("\n"), directives: directives };
     }
 }
-class ProblemGobanViewer extends AbstractGobanViewer {
+export class ClickableGobanViewer extends AbstractGobanViewer {
+    constructor(elementId, node, opts) {
+        super(elementId, node);
+        this.opts = opts || {};
+        super.draw(Object.assign({ mode: GobanViewerMode.PLAY }, this.opts));
+    }
+    ;
+    onClick(row, col, color) {
+        var _a;
+        const coord = rowColumnToCoordinate([row, col]);
+        for (const i in ((_a = this.currentNode) === null || _a === void 0 ? void 0 : _a.children) || []) {
+            const child = this.currentNode.children[i];
+            let [_, childCoord] = child.playerAndCoordinates();
+            if (coord == childCoord) {
+                this.goTo(child);
+                return;
+            }
+        }
+        const node = (new SGFNode());
+        node.setMove(color, coord);
+        try {
+            this.goban.applyNodes(node); // TODO: Check for errors
+            this.currentNode.appendNode(node);
+            this.goTo(node);
+        }
+        catch (e) {
+            console.error(e);
+        }
+    }
+}
+export class ProblemGobanViewer extends AbstractGobanViewer {
     constructor(elementId, node, opts) {
         var _a;
         super(elementId, node);

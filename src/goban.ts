@@ -16,19 +16,40 @@ export class GobanPosition {
 
 	protected readjustGoban(size: number) {
 		this.size = size;
-		if (this.goban.length != this.size) {
-			// TODO: Add or remove rows wo that it fits new size
+
+		// Remove excess rows if shrinking
+		while (this.goban.length > this.size) {
+			this.goban.pop();
 		}
-		for (let rowNo = 0; rowNo < this.size; rowNo++) {
-			const row = this.goban[rowNo] || [];
-			if (row.length != this.size) {
-				// TODO: Add or remove elements
+
+		// Add new rows if growing
+		while (this.goban.length < this.size) {
+			const r: SGFColor[] = [];
+			for (let col = 0; col < this.size; col++) {
+				r.push(SGFColor.NONE);
 			}
-			// const r: SGFColor[] = [];
-			// for (let col = 0; col < this.size; col ++) {
-			// 	r.push(SGFColor.NONE);
-			// }
-			// this.goban.push(r);
+			this.goban.push(r);
+		}
+
+		// Adjust each row
+		for (let rowNo = 0; rowNo < this.size; rowNo++) {
+			let row = this.goban[rowNo];
+
+			// If row doesn't exist, create it
+			if (!row) {
+				row = [];
+				this.goban[rowNo] = row;
+			}
+
+			// Remove excess columns if shrinking
+			while (row.length > this.size) {
+				row.pop();
+			}
+
+			// Add new columns if growing
+			while (row.length < this.size) {
+				row.push(SGFColor.NONE);
+			}
 		}
 	}
 

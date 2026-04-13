@@ -323,7 +323,7 @@ var SGFNode = /** @class */ (function () {
             }
             ;
         }
-        var goban = new SGFGoban();
+        var goban = new SGFGoban(this);
         goban.applyNodes.apply(goban, path);
         for (var row = 0; row < goban.size; row++) {
             for (var col = 0; col < goban.size; col++) {
@@ -795,7 +795,6 @@ function isAlpha(ch) {
 /** Just the goban stones and some basic utility methods. */
 var GobanPosition = /** @class */ (function () {
     function GobanPosition(size, goban) {
-        this.size = size;
         this.goban = [];
         // console.log("size=" + size)
         this.size = size;
@@ -803,15 +802,41 @@ var GobanPosition = /** @class */ (function () {
             this.goban = goban;
         }
         else {
-            for (var row = 0; row < this.size; row++) {
-                var r = [];
-                for (var col = 0; col < this.size; col++) {
-                    r.push(SGFColor.NONE);
-                }
-                this.goban.push(r);
-            }
+            this.readjustGoban(size);
         }
     }
+    GobanPosition.prototype.readjustGoban = function (size) {
+        this.size = size;
+        // Remove excess rows if shrinking
+        while (this.goban.length > this.size) {
+            this.goban.pop();
+        }
+        // Add new rows if growing
+        while (this.goban.length < this.size) {
+            var r = [];
+            for (var col = 0; col < this.size; col++) {
+                r.push(SGFColor.NONE);
+            }
+            this.goban.push(r);
+        }
+        // Adjust each row
+        for (var rowNo = 0; rowNo < this.size; rowNo++) {
+            var row = this.goban[rowNo];
+            // If row doesn't exist, create it
+            if (!row) {
+                row = [];
+                this.goban[rowNo] = row;
+            }
+            // Remove excess columns if shrinking
+            while (row.length > this.size) {
+                row.pop();
+            }
+            // Add new columns if growing
+            while (row.length < this.size) {
+                row.push(SGFColor.NONE);
+            }
+        }
+    };
     GobanPosition.prototype.row = function (r) {
         var res = [];
         for (var i = 0; i < this.size; i++) {
@@ -1014,6 +1039,10 @@ var SGFGoban = /** @class */ (function (_super) {
     };
     SGFGoban.prototype.applySingleNode = function (node) {
         var _a;
+        var size = parseInt(node.getProperty(Tag.Size) || "");
+        if (size && size != this.size) {
+            this.readjustGoban(size);
+        }
         var ab = node.getProperties(Tag.AddBlack) || [];
         var aw = node.getProperties(Tag.AddWhite) || [];
         this.addStones.apply(this, __spreadArray([SGFColor.WHITE], aw, false));
@@ -1092,6 +1121,9 @@ var AUTOPLAY_INTERVAL = 400;
 var coordinatesLetters = "abcdefghjklmnopqrst";
 var correctWords = ["correct", "točno", "+", "right"];
 function applyStyle(el, style) {
+    if (!el) {
+        return;
+    }
     if (style) {
         for (var _i = 0, _a = Object.keys(style); _i < _a.length; _i++) {
             var key = _a[_i];
@@ -1250,9 +1282,6 @@ var ClickableGobanViewer = /** @class */ (function (_super) {
     ;
     ClickableGobanViewer.prototype.onClick = function (row, col, color) {
         var _a;
-        if (this.currentNode == this.rootNode && color == SGFColor.NONE) {
-            color = SGFColor.BLACK;
-        }
         var coord = rowColumnToCoordinate([row, col]);
         for (var i in ((_a = this.currentNode) === null || _a === void 0 ? void 0 : _a.children) || []) {
             var child = this.currentNode.children[i];

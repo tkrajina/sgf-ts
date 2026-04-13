@@ -230,7 +230,7 @@ export class SGFNode {
             }
             ;
         }
-        const goban = new SGFGoban();
+        const goban = new SGFGoban(this);
         goban.applyNodes(...path);
         for (let row = 0; row < goban.size; row++) {
             for (let col = 0; col < goban.size; col++) {

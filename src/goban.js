@@ -2,7 +2,6 @@ import { coordinateToRowColumn, expandCoordinatesRange, rowColumnToCoordinate, S
 /** Just the goban stones and some basic utility methods. */
 export class GobanPosition {
     constructor(size, goban) {
-        this.size = size;
         this.goban = [];
         // console.log("size=" + size)
         this.size = size;
@@ -10,12 +9,38 @@ export class GobanPosition {
             this.goban = goban;
         }
         else {
-            for (let row = 0; row < this.size; row++) {
-                const r = [];
-                for (let col = 0; col < this.size; col++) {
-                    r.push(SGFColor.NONE);
-                }
-                this.goban.push(r);
+            this.readjustGoban(size);
+        }
+    }
+    readjustGoban(size) {
+        this.size = size;
+        // Remove excess rows if shrinking
+        while (this.goban.length > this.size) {
+            this.goban.pop();
+        }
+        // Add new rows if growing
+        while (this.goban.length < this.size) {
+            const r = [];
+            for (let col = 0; col < this.size; col++) {
+                r.push(SGFColor.NONE);
+            }
+            this.goban.push(r);
+        }
+        // Adjust each row
+        for (let rowNo = 0; rowNo < this.size; rowNo++) {
+            let row = this.goban[rowNo];
+            // If row doesn't exist, create it
+            if (!row) {
+                row = [];
+                this.goban[rowNo] = row;
+            }
+            // Remove excess columns if shrinking
+            while (row.length > this.size) {
+                row.pop();
+            }
+            // Add new columns if growing
+            while (row.length < this.size) {
+                row.push(SGFColor.NONE);
             }
         }
     }
@@ -91,9 +116,9 @@ export class GobanPosition {
         }
         let [row, column] = coordinateToRowColumn(coord);
         const neighborsCoords = [
-            rowColumnToCoordinate([row - 1, column]),
-            rowColumnToCoordinate([row + 1, column]),
-            rowColumnToCoordinate([row, column - 1]),
+            rowColumnToCoordinate([row - 1, column]), // UP
+            rowColumnToCoordinate([row + 1, column]), // DOWN
+            rowColumnToCoordinate([row, column - 1]), // LEFT
             rowColumnToCoordinate([row, column + 1]) // RIGHT
         ];
         for (const neighborCoord of neighborsCoords) {
@@ -202,6 +227,10 @@ export class SGFGoban extends GobanPosition {
     }
     applySingleNode(node) {
         var _a;
+        const size = parseInt(node.getProperty(Tag.Size) || "");
+        if (size && size != this.size) {
+            this.readjustGoban(size);
+        }
         const ab = node.getProperties(Tag.AddBlack) || [];
         const aw = node.getProperties(Tag.AddWhite) || [];
         this.addStones(SGFColor.WHITE, ...aw);
